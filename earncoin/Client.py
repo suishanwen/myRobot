@@ -3,13 +3,17 @@
 # encoding: utf-8
 # 客户端调用，用于查看API返回结果
 
-from OkcoinSpotAPI import OKCoinSpot
+import configparser
+import sys
+import time
+
 from MyUtil import fromDict, fromTimeStamp,sendEmail
-import time, sys, configparser
+
+from earncoin.OkcoinSpotAPI import OKCoinSpot
 
 # 初始化apikey，secretkey,url
-apikey = '********************'
-secretkey = '********************'
+apikey = '*******************************************'
+secretkey = '*******************************************'
 okcoinRESTURL = 'www.okcoin.cn'  # 请求注意：国内账号需要 修改为 www.okcoin.cn
 
 # 现货API
