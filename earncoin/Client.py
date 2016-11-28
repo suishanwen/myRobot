@@ -7,10 +7,9 @@ import configparser
 import sys
 import time
 
-from MyUtil import fromDict, fromTimeStamp,sendEmail
+from util.MyUtil import fromDict, fromTimeStamp,sendEmail
 
-from earncoin.OkcoinSpotAPI import OKCoinSpot
-
+from api.OkcoinSpotAPI import OKCoinSpot
 
 # 读取比率配置
 config = configparser.ConfigParser()
