@@ -11,17 +11,19 @@ from MyUtil import fromDict, fromTimeStamp,sendEmail
 
 from earncoin.OkcoinSpotAPI import OKCoinSpot
 
+
+# 读取比率配置
+config = configparser.ConfigParser()
+config.read("../key.ini")
+config.read("config.ini")
+
 # 初始化apikey，secretkey,url
-apikey = '*******************************************'
-secretkey = '*******************************************'
+apikey = config.get("okcoin", "apikey")
+secretkey = config.get("okcoin", "secretkey")
 okcoinRESTURL = 'www.okcoin.cn'  # 请求注意：国内账号需要 修改为 www.okcoin.cn
 
 # 现货API
 okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
-
-# 读取比率配置
-config = configparser.ConfigParser()
-config.read("config.ini")
 
 global baseRate, orderInfo, btcPerAmount,shiftRate,lastRecordTime,switch
 baseRate = round(float(config.get("base", "baseRate")), 5)
