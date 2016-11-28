@@ -33,7 +33,14 @@ class OKCoinSpot:
         if symbol:
             params = 'symbol=%(symbol)s' %{'symbol':symbol}
         return httpGet(self.__url,TRADES_RESOURCE,params)
-    
+
+    # 获取OKCOIN现货历史交易信息
+    def klines(self, symbol='',type='15min',size='',since='',):
+        TRADES_RESOURCE = "/api/v1/kline.do"
+        params = 'symbol=%(symbol)s&type=%(type)s&size=%(size)d&since=%(since)d&rnd=%(since)s' % {'symbol': symbol,'type': type,'size': size,'since': since,'rnd': 1}
+        return httpGet(self.__url, TRADES_RESOURCE, params)
+
+
     #获取用户现货账户信息
     def userinfo(self):
         USERINFO_RESOURCE = "/api/v1/userinfo.do"
