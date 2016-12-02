@@ -23,7 +23,7 @@ okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
 
 symbol = config.get("kline", "symbol")
 type = config.get("kline", "type")
-transaction = config.get("kline", "transaction")
+transaction = float(config.get("kline", "transaction"))
 
 orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "dealAmount": 0, "transaction": 0}
 
@@ -141,7 +141,7 @@ def checkOrderStatus(symbol, orderId, watiCount=0):
 def btcTrade(type, amount):
     price = getCoinPrice("btc_cny", type)
     if type == "buy":
-        amount = getBuyAmount(price, 3)
+        amount = getBuyAmount(price, 4)
     orderId = makeOrder("btc_cny", type, price, amount)
     if orderId != "-1":
         watiCount = 0
@@ -295,7 +295,7 @@ while True:
             trend = "buy"
         else:
             trend = "sell"
-        if trendBak!="" and trendBak != trend:
+        if  trendBak!="" and trendBak != trend:
             sendEmail("趋势发生改变:" + trendBak + "->" + trend)
             if symbol == "btc_cny":
                 if trend == "buy":
