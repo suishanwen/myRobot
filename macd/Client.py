@@ -24,6 +24,7 @@ okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
 symbol = config.get("kline", "symbol")
 type = config.get("kline", "type")
 transaction = float(config.get("kline", "transaction"))
+tradeWaitCount = int(config.get("kline", "tradeWaitCount"))
 
 orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "dealAmount": 0, "transaction": 0}
 buyPrice = 0
@@ -141,6 +142,7 @@ def checkOrderStatus(symbol, orderId, watiCount=0):
 
 
 def btcTrade(type, amount):
+    global tradeWaitCount
     price = getCoinPrice("btc_cny", type)
     if type == "buy":
         amount = getBuyAmount(price, 4)
@@ -148,14 +150,14 @@ def btcTrade(type, amount):
     if orderId != "-1":
         watiCount = 0
         status = 0
-        while watiCount < 31 and status != 2:
+        while watiCount < (tradeWaitCount + 1) and status != 2:
             status = checkOrderStatus("btc_cny", orderId, watiCount)
             time.sleep(1)
             watiCount += 1
-            if watiCount == 30 and status != 2:
+            if watiCount == tradeWaitCount and status != 2:
                 global orderInfo
                 if getCoinPrice("btc_cny", type) == orderInfo["price"]:
-                    watiCount -= 10
+                    watiCount -= int(tradeWaitCount/3)
         if status != 2:
             status = cancelOrder("btc_cny", orderId)
         return status
@@ -171,14 +173,14 @@ def ltcTrade(type, amount):
     if orderId != "-1":
         watiCount = 0
         status = 0
-        while watiCount < 31 and status != 2:
+        while watiCount < (tradeWaitCount + 1) and status != 2:
             status = checkOrderStatus("ltc_cny", orderId, watiCount)
             time.sleep(1)
             watiCount += 1
-            if watiCount == 30 and status != 2:
+            if watiCount == tradeWaitCount and status != 2:
                 global orderInfo
                 if getCoinPrice("ltc_cny", type) == orderInfo["price"]:
-                    watiCount -= 10
+                    watiCount -= int(tradeWaitCount/3)
         if status != 2:
             status = cancelOrder("ltc_cny", orderId)
         return status
@@ -245,7 +247,7 @@ def showCurrentMarket(sleepCount=0):
 
 
 def btcFun():
-    global orderInfo, buyPrice, totalTransaction
+    global orderInfo, buyPrice, totalTransaction,transaction
     status = btcTrade(orderInfo["type"], getUnhandledAmount())
     # 非下单失败
     if status != -2:
@@ -256,7 +258,9 @@ def btcFun():
             totalTransaction = totalTransaction + orderInfo["transaction"]
         else:
             totalTransaction = totalTransaction - orderInfo["transaction"]
-            writeLog("diff--->" + round(orderInfo["price"] - buyPrice, 2) + " totalTransaction--->" + totalTransaction)
+            writeLog(' '.join(
+                ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionDiff:",
+                 str(round(totalTransaction - transaction,2)), "totalTransaction:", str(round(totalTransaction,2))]))
             totalTransaction = 0
     if status == 2:
         showAccountInfo()
@@ -277,8 +281,9 @@ def ltcFun():
             totalTransaction = totalTransaction + orderInfo["ransaction"]
         else:
             totalTransaction = totalTransaction - orderInfo["ransaction"]
-            writeLog("priceDiff:" + round(orderInfo["price"] - buyPrice, 2) + " transactionDiff:" + (
-            totalTransaction - transaction) + " totalTransaction:" + totalTransaction)
+            writeLog(' '.join(
+                ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionDiff:",
+                 str(round(totalTransaction - transaction, 2)), "totalTransaction:", str(round(totalTransaction, 2))]))
             totalTransaction = 0
     if status == 2:
         showAccountInfo()
@@ -317,9 +322,9 @@ while True:
             sendEmail("趋势发生改变:" + trendBak + "->" + trend)
             if symbol == "btc_cny":
                 if trend == "buy":
-                    setOrderInfo(trend)
+                    setOrderInfo("buy")
                 else:
-                    setOrderInfo(trend, getCoinNum(symbol))
+                    setOrderInfo("sell", getCoinNum(symbol))
                 btcFun()
             elif symbol == "ltc_cny":
                 if trend == "buy":
@@ -328,8 +333,7 @@ while True:
                     setOrderInfo(trend, getCoinNum(symbol))
                 ltcFun()
         trendBak = trend
-        print('ma7:%(ma7)s  ma30:%(ma30)s diff:%(diff)s' % {'ma7': ma7, 'ma30': ma30, 'diff': round(ma7 - ma30, 2)},
-              end=' | ')
+        print('ma7:%(ma7)s  ma30:%(ma30)s diff:%(diff)s' % {'ma7': ma7, 'ma30': ma30, 'diff': round(ma7 - ma30, 2)})
         sys.stdout.flush()
     except Exception as err:
         print(err)
