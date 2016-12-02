@@ -28,7 +28,7 @@ tradeWaitCount = int(config.get("kline", "tradeWaitCount"))
 
 orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "dealAmount": 0, "transaction": 0}
 buyPrice = 0
-totalTransaction = 0
+transactionBack = 0
 
 
 def setOrderInfo(type, amount=0):
@@ -247,21 +247,23 @@ def showCurrentMarket(sleepCount=0):
 
 
 def btcFun():
-    global orderInfo, buyPrice, totalTransaction,transaction
+    global orderInfo, buyPrice, transactionBack,transaction
     status = btcTrade(orderInfo["type"], getUnhandledAmount())
     # 非下单失败
     if status != -2:
         setTransaction("minus")
         writeLog()
-        if orderInfo["type"] == "buy":
-            buyPrice = orderInfo["price"]
-            totalTransaction = totalTransaction + orderInfo["transaction"]
-        else:
-            totalTransaction = totalTransaction - orderInfo["transaction"]
-            writeLog(' '.join(
-                ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionDiff:",
-                 str(round(totalTransaction - transaction,2)), "totalTransaction:", str(round(totalTransaction,2))]))
-            totalTransaction = 0
+        if getUnhandledAmount() == 0:  # 交易完成
+            if orderInfo["type"] == "buy":
+                buyPrice = orderInfo["price"]
+                transactionBack = transactionBack + orderInfo["transaction"]
+            else:
+                transactionBack = transactionBack - orderInfo["transaction"]
+                writeLog(' '.join(
+                    ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionReward:",
+                     str(round(transactionBack - transaction, 2)), "transactionBack:",
+                     str(round(transactionBack, 2))]))
+                transactionBack = 0
     if status == 2:
         showAccountInfo()
         showCurrentMarket()
@@ -270,21 +272,22 @@ def btcFun():
 
 
 def ltcFun():
-    global orderInfo, buyPrice, totalTransaction, transaction
+    global orderInfo, buyPrice, transactionBack, transaction
     status = ltcTrade(orderInfo["type"], getUnhandledAmount())
     # 非下单失败
     if status != -2:
         setTransaction("minus")
         writeLog()
-        if orderInfo["type"] == "buy":
-            buyPrice = orderInfo["price"]
-            totalTransaction = totalTransaction + orderInfo["ransaction"]
-        else:
-            totalTransaction = totalTransaction - orderInfo["ransaction"]
-            writeLog(' '.join(
-                ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionDiff:",
-                 str(round(totalTransaction - transaction, 2)), "totalTransaction:", str(round(totalTransaction, 2))]))
-            totalTransaction = 0
+        if getUnhandledAmount() == 0:  # 交易完成
+            if orderInfo["type"] == "buy":
+                buyPrice = orderInfo["price"]
+                transactionBack = transactionBack + orderInfo["ransaction"]
+            else:
+                transactionBack = transactionBack - orderInfo["ransaction"]
+                writeLog(' '.join(
+                    ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionReward:",
+                     str(round(transactionBack - transaction, 2)), "transactionBack:", str(round(transactionBack, 2))]))
+                transactionBack = 0
     if status == 2:
         showAccountInfo()
         showCurrentMarket()

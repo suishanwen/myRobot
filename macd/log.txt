@@ -28,3 +28,8 @@ LTC可用数量 0.000499 冻结数量 0
  btc_cny sell 5448.2 0.091 -495.79 2016-12-02 19:43:46
 priceDiff: 0.11 transactionDiff: 0.010000000000047748 totalTransaction: 500.01000000000005
  btc_cny buy 5451.610000000001 0.091 3.9 2016-12-02 19:51:58
+ btc_cny sell 5446.57 0.091 -495.64 2016-12-02 19:54:48
+priceDiff: -5.04 transactionDiff: -0.46 totalTransaction: 499.54
+ btc_cny buy 5446.97 0.091 4.33 2016-12-02 19:54:53
+ btc_cny sell 5447.26 0.091 -495.7 2016-12-02 19:54:58
+priceDiff: 0.29 transactionDiff: 0.03 totalTransaction: 500.03
