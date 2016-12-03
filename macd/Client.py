@@ -105,7 +105,7 @@ def makeOrder(symbol, type, price, amount):
 # print (u' 现货批量下单 ')
 # print (okcoinSpot.batchTrade('ltc_usd','buy','[{price:0.1,amount:0.2},{price:0.1,amount:0.2}]'))
 def cancelOrder(symbol, orderId):
-    print(u'---------------------------------------------现货取消订单--------------------------------------------------')
+    print(u'\n---------------------------------------------现货取消订单--------------------------------------------------')
     result = okcoinSpot.cancelOrder(symbol, orderId)
     if result['result']:
         print(u"订单", result['order_id'], "撤销成功")
@@ -252,7 +252,6 @@ def orderProcess():
                  str(round(transactionBack, 2))]))
             transactionBack = 0
         showAccountInfo()
-        showCurrentMarket()
     else:
         orderProcess()
 
@@ -302,7 +301,7 @@ def currentVsMa():
     if trendBak != "" and trendBak != trend:
         if trend == "buy":
             writeLog("-----------------------------------------------------------------------")
-        sendEmail("趋势发生改变:" + trendBak + "->" + trend)
+        # sendEmail("趋势发生改变:" + trendBak + "->" + trend)
         setOrderInfo(trend)
         orderProcess()
     trendBak = trend
