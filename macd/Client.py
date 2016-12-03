@@ -231,7 +231,10 @@ def showCurrentMarket(sleepCount=0):
 
 def orderProcess():
     global orderInfo, buyPrice, transactionBack, transaction
-    status = trade(orderInfo["type"], getUnhandledAmount())
+    amount= getUnhandledAmount()
+    if orderInfo["type"]=="sell" and amount == 0:
+        return
+    status = trade(orderInfo["type"],amount)
     # 非下单失败
     if status != -2:
         setTransaction("minus")
@@ -278,7 +281,7 @@ def ma7Vs30():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         if trend == "buy":
-            print("-----------------------------------------------------------------------")
+            writeLog("-----------------------------------------------------------------------")
         sendEmail("趋势发生改变:" + trendBak + "->" + trend)
         setOrderInfo(trend)
         orderProcess()
@@ -297,7 +300,7 @@ def currentVsMa7():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         if trend == "buy":
-            print("-----------------------------------------------------------------------")
+            writeLog("-----------------------------------------------------------------------")
         sendEmail("趋势发生改变:" + trendBak + "->" + trend)
         setOrderInfo(trend)
         orderProcess()
@@ -315,7 +318,7 @@ def currentVsMa30():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         if trend == "buy":
-            print("-----------------------------------------------------------------------")
+            writeLog("-----------------------------------------------------------------------")
         sendEmail("趋势发生改变:" + trendBak + "->" + trend)
         setOrderInfo(trend)
         orderProcess()
