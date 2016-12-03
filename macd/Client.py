@@ -25,6 +25,7 @@ okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
 symbol = config.get("kline", "symbol")
 type = config.get("kline", "type")
 cross = config.get("kline", "cross")
+currentType = config.get("kline", "currentType")
 transaction = float(config.get("trade", "transaction"))
 tradeWaitCount = int(config.get("trade", "tradeWaitCount"))
 # 全局变量
@@ -290,11 +291,11 @@ def ma7Vs30():
     sys.stdout.flush()
 
 
-def currentVsMa7():
-    global trendBak
-    ma7 = getMA(7)
+def currentVsMa():
+    global trendBak,currentType
+    ma = getMA(int(currentType))
     currentPrice = getCoinPrice(symbol, "buy")
-    if currentPrice > ma7:
+    if currentPrice > ma:
         trend = "buy"
     else:
         trend = "sell"
@@ -305,35 +306,14 @@ def currentVsMa7():
         setOrderInfo(trend)
         orderProcess()
     trendBak = trend
-    print('current:%(current)s  ma7:%(ma7)s diff:%(diff)s' % {'current': currentPrice, 'ma7': ma7, 'diff': round(currentPrice - ma7, 2)})
+    print('current:%(current)s  ma%(currentType)s: diff:%(diff)s' % {'current': currentPrice, 'currentType': currentType, 'diff': round(currentPrice - ma, 2)})
     sys.stdout.flush()
-
-def currentVsMa30():
-    global trendBak
-    ma30 = getMA(30)
-    currentPrice = getCoinPrice(symbol, "buy")
-    if currentPrice > ma30:
-        trend = "buy"
-    else:
-        trend = "sell"
-    if trendBak != "" and trendBak != trend:
-        if trend == "buy":
-            writeLog("-----------------------------------------------------------------------")
-        sendEmail("趋势发生改变:" + trendBak + "->" + trend)
-        setOrderInfo(trend)
-        orderProcess()
-    trendBak = trend
-    print('current:%(current)s  ma30:%(ma30)s diff:%(diff)s' % {'current': currentPrice, 'ma30': ma30, 'diff': round(currentPrice - ma30, 2)})
-    sys.stdout.flush()
-
 
 showAccountInfo()
 while True:
     strategy = ma7Vs30
-    if cross == "currentVsMa30":
-        strategy = currentVsMa30
-    elif cross == "currentVsMa7":
-        strategy=currentVsMa7
+    if cross == "current":
+        strategy = currentVsMa
     try:
         strategy()
     except Exception as err:
