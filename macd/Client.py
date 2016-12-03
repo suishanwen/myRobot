@@ -74,7 +74,7 @@ def getBuyAmount(price, accuracy=2):
 
 def getUnhandledAmount():
     global orderInfo
-    return round(float(orderInfo["amount"]) - float(orderInfo["dealAmount"]), 4)
+    return round(float(orderInfo["amount"]) - float(orderInfo["dealAmount"]), 5)
 
 
 def getCoinNum(symbol):
@@ -91,7 +91,7 @@ def getCoinNum(symbol):
 
 
 def makeOrder(symbol, type, price, amount):
-    print(u'-----------------------------------------------现货下单----------------------------------------------------')
+    print(u'\n-----------------------------------------------现货下单----------------------------------------------------')
     result = okcoinSpot.trade(symbol, type, price, amount)
     if result['result']:
         setPrice(price)
@@ -111,7 +111,7 @@ def cancelOrder(symbol, orderId):
         print(u"订单", result['order_id'], "撤销成功")
     else:
         print(u"订单", orderId, "撤销失败！！！")
-    return checkOrderStatus("ltc_cny", orderId)
+    return checkOrderStatus(symbol, orderId)
 
 
 def checkOrderStatus(symbol, orderId, watiCount=0):
@@ -153,6 +153,8 @@ def trade(type, amount):
     price = getCoinPrice(symbol, type)
     if type == "buy":
         amount = getBuyAmount(price, 4)
+    if orderInfo["type"] == "sell" and amount < 0.01:
+        return
     orderId = makeOrder(symbol, type, price, amount)
     if orderId != "-1":
         watiCount = 0
@@ -177,7 +179,7 @@ def getCoinPrice(symbol, type):
         if type == "buy":
             return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["buy"]) + 0.01, 2)
         else:
-            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["sell"])- 0.01, 2)
+            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["sell"]) - 0.01, 2)
     else:
         if type == "buy":
             return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["buy"]), 2)
@@ -232,10 +234,8 @@ def showCurrentMarket(sleepCount=0):
 
 def orderProcess():
     global orderInfo, buyPrice, transactionBack, transaction
-    amount= getUnhandledAmount()
-    if orderInfo["type"]=="sell" and amount < 0.001:
-        return
-    status = trade(orderInfo["type"],amount)
+    amount = getUnhandledAmount()
+    status = trade(orderInfo["type"], amount)
     # 非下单失败
     if status != -2:
         setTransaction("minus")
@@ -291,7 +291,7 @@ def ma7Vs30():
 
 
 def currentVsMa():
-    global trendBak,currentType
+    global trendBak, currentType
     ma = getMA(int(currentType))
     currentPrice = getCoinPrice(symbol, "buy")
     if currentPrice > ma:
@@ -305,8 +305,11 @@ def currentVsMa():
         setOrderInfo(trend)
         orderProcess()
     trendBak = trend
-    print('current:%(current)s  ma%(currentType)s: diff:%(diff)s' % {'current': currentPrice, 'currentType': currentType, 'diff': round(currentPrice - ma, 2)})
+    print(
+        'current:%(current)s  ma%(currentType)s: diff:%(diff)s' % {'current': currentPrice, 'currentType': currentType,
+                                                                   'diff': round(currentPrice - ma, 2)}, end=" | ")
     sys.stdout.flush()
+
 
 showAccountInfo()
 while True:
