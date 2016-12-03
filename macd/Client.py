@@ -233,7 +233,7 @@ def showCurrentMarket(sleepCount=0):
 def orderProcess():
     global orderInfo, buyPrice, transactionBack, transaction
     amount= getUnhandledAmount()
-    if orderInfo["type"]=="sell" and amount == 0:
+    if orderInfo["type"]=="sell" and amount < 0.001:
         return
     status = trade(orderInfo["type"],amount)
     # 非下单失败
