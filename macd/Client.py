@@ -61,6 +61,7 @@ def setDealAmount(dealAmount):
 
 
 def setTransaction(type):
+    global orderInfo
     if type == "plus":
         orderInfo['transaction'] = round(orderInfo['transaction'] + orderInfo['dealAmount'] * orderInfo['price'], 2)
     else:
