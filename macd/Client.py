@@ -8,7 +8,7 @@ import time, sys, configparser
 from util.MyUtil import fromDict, fromTimeStamp, sendEmail
 from api.OkcoinSpotAPI import OKCoinSpot
 
-# 读取比率配置
+# 读取配置文件
 config = configparser.ConfigParser()
 config.read("../key.ini")
 config.read("config.ini")
@@ -21,23 +21,29 @@ okcoinRESTURL = 'www.okcoin.cn'  # 请求注意：国内账号需要 修改为 w
 # 现货API
 okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
 
+# 获取配置
 symbol = config.get("kline", "symbol")
 type = config.get("kline", "type")
-transaction = float(config.get("kline", "transaction"))
-tradeWaitCount = int(config.get("kline", "tradeWaitCount"))
-
+cross = config.get("kline", "cross")
+transaction = float(config.get("trade", "transaction"))
+tradeWaitCount = int(config.get("trade", "tradeWaitCount"))
+# 全局变量
 orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "dealAmount": 0, "transaction": 0}
 buyPrice = 0
 transactionBack = 0
+trendBak = ""
 
 
-def setOrderInfo(type, amount=0):
-    global orderInfo
+def setOrderInfo(type):
+    global orderInfo, symbol
     orderInfo['type'] = type
-    orderInfo['amount'] = amount
+    if type == "sell":
+        orderInfo['amount'] = getCoinNum(symbol)
+    else:
+        orderInfo['amount'] = 0
     orderInfo['price'] = 0
     orderInfo['dealAmount'] = 0
-    if amount > 0:
+    if orderInfo['amount'] > 0:
         orderInfo['transaction'] = 0
     else:
         orderInfo['transaction'] = transaction
@@ -134,55 +140,32 @@ def checkOrderStatus(symbol, orderId, watiCount=0):
             elif status == 2:
                 print("订单", orderId, "完全成交")
             elif status == 3:
-                print("订单", orderId, "扯单处理中")
+                print("订单", orderId, "撤单处理中")
             return status
     else:
         print(orderId, "未查询到订单信息")
         return -2
 
 
-def btcTrade(type, amount):
-    global tradeWaitCount
-    price = getCoinPrice("btc_cny", type)
+def trade(type, amount):
+    global tradeWaitCount, symbol
+    price = getCoinPrice(symbol, type)
     if type == "buy":
         amount = getBuyAmount(price, 4)
-    orderId = makeOrder("btc_cny", type, price, amount)
+    orderId = makeOrder(symbol, type, price, amount)
     if orderId != "-1":
         watiCount = 0
         status = 0
         while watiCount < (tradeWaitCount + 1) and status != 2:
-            status = checkOrderStatus("btc_cny", orderId, watiCount)
+            status = checkOrderStatus(symbol, orderId, watiCount)
             time.sleep(1)
             watiCount += 1
             if watiCount == tradeWaitCount and status != 2:
                 global orderInfo
-                if getCoinPrice("btc_cny", type) == orderInfo["price"]:
-                    watiCount -= int(tradeWaitCount/3)
+                if getCoinPrice(symbol, type) == orderInfo["price"]:
+                    watiCount -= int(tradeWaitCount / 3)
         if status != 2:
-            status = cancelOrder("btc_cny", orderId)
-        return status
-    else:
-        return -2
-
-
-def ltcTrade(type, amount):
-    price = getCoinPrice("ltc_cny", type)
-    if type == "buy":
-        amount = getBuyAmount(price)
-    orderId = makeOrder("ltc_cny", type, price, amount)
-    if orderId != "-1":
-        watiCount = 0
-        status = 0
-        while watiCount < (tradeWaitCount + 1) and status != 2:
-            status = checkOrderStatus("ltc_cny", orderId, watiCount)
-            time.sleep(1)
-            watiCount += 1
-            if watiCount == tradeWaitCount and status != 2:
-                global orderInfo
-                if getCoinPrice("ltc_cny", type) == orderInfo["price"]:
-                    watiCount -= int(tradeWaitCount/3)
-        if status != 2:
-            status = cancelOrder("ltc_cny", orderId)
+            status = cancelOrder(symbol, orderId)
         return status
     else:
         return -2
@@ -191,9 +174,9 @@ def ltcTrade(type, amount):
 def getCoinPrice(symbol, type):
     if symbol == "btc_cny":
         if type == "buy":
-            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["buy"]), 2) + 0.01
+            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["buy"]) + 0.01, 2)
         else:
-            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["sell"]), 2) - 0.01
+            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["sell"])- 0.01, 2)
     else:
         if type == "buy":
             return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["buy"]), 2)
@@ -246,9 +229,9 @@ def showCurrentMarket(sleepCount=0):
               ltcTicker["vol"], "        ", fromTimeStamp(ltc['date']))
 
 
-def btcFun():
-    global orderInfo, buyPrice, transactionBack,transaction
-    status = btcTrade(orderInfo["type"], getUnhandledAmount())
+def orderProcess():
+    global orderInfo, buyPrice, transactionBack, transaction
+    status = trade(orderInfo["type"], getUnhandledAmount())
     # 非下单失败
     if status != -2:
         setTransaction("minus")
@@ -267,30 +250,7 @@ def btcFun():
         showAccountInfo()
         showCurrentMarket()
     else:
-        btcFun()
-
-
-def ltcFun():
-    global orderInfo, buyPrice, transactionBack, transaction
-    status = ltcTrade(orderInfo["type"], getUnhandledAmount())
-    # 非下单失败
-    if status != -2:
-        setTransaction("minus")
-        writeLog()
-    if status == 2:
-        if orderInfo["type"] == "buy":
-            buyPrice = orderInfo["price"]
-            transactionBack = transactionBack + orderInfo["ransaction"]
-        else:
-            transactionBack = transactionBack - orderInfo["ransaction"]
-            writeLog(' '.join(
-                ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionReward:",
-                 str(round(transactionBack - transaction, 2)), "transactionBack:", str(round(transactionBack, 2))]))
-            transactionBack = 0
-        showAccountInfo()
-        showCurrentMarket()
-    else:
-        ltcFun()
+        orderProcess()
 
 
 def getMA(param):
@@ -308,34 +268,71 @@ def getMA(param):
     return round(ma / param, 2)
 
 
-trend = ""
-trendBak = ""
+def ma7Vs30():
+    global trendBak
+    ma7 = getMA(7)
+    ma30 = getMA(30)
+    if ma7 > ma30:
+        trend = "buy"
+    else:
+        trend = "sell"
+    if trendBak != "" and trendBak != trend:
+        if trend == "buy":
+            print("-----------------------------------------------------------------------")
+        sendEmail("趋势发生改变:" + trendBak + "->" + trend)
+        setOrderInfo(trend)
+        orderProcess()
+    trendBak = trend
+    print('ma7:%(ma7)s  ma30:%(ma30)s diff:%(diff)s' % {'ma7': ma7, 'ma30': ma30, 'diff': round(ma7 - ma30, 2)})
+    sys.stdout.flush()
+
+
+def currentVsMa7():
+    global trendBak
+    ma7 = getMA(7)
+    currentPrice = getCoinPrice(symbol, "buy")
+    if currentPrice > ma7:
+        trend = "buy"
+    else:
+        trend = "sell"
+    if trendBak != "" and trendBak != trend:
+        if trend == "buy":
+            print("-----------------------------------------------------------------------")
+        sendEmail("趋势发生改变:" + trendBak + "->" + trend)
+        setOrderInfo(trend)
+        orderProcess()
+    trendBak = trend
+    print('current:%(current)s  ma7:%(ma7)s diff:%(diff)s' % {'current': currentPrice, 'ma7': ma7, 'diff': round(currentPrice - ma7, 2)})
+    sys.stdout.flush()
+
+def currentVsMa30():
+    global trendBak
+    ma30 = getMA(30)
+    currentPrice = getCoinPrice(symbol, "buy")
+    if currentPrice > ma30:
+        trend = "buy"
+    else:
+        trend = "sell"
+    if trendBak != "" and trendBak != trend:
+        if trend == "buy":
+            print("-----------------------------------------------------------------------")
+        sendEmail("趋势发生改变:" + trendBak + "->" + trend)
+        setOrderInfo(trend)
+        orderProcess()
+    trendBak = trend
+    print('current:%(current)s  ma30:%(ma30)s diff:%(diff)s' % {'current': currentPrice, 'ma30': ma30, 'diff': round(currentPrice - ma30, 2)})
+    sys.stdout.flush()
+
+
 showAccountInfo()
 while True:
+    strategy = ma7Vs30
+    if cross == "currentVsMa30":
+        strategy = currentVsMa30
+    elif cross == "currentVsMa7":
+        strategy=currentVsMa7
     try:
-        ma7 = getMA(7)
-        ma30 = getMA(30)
-        if ma7 >= ma30:
-            trend = "buy"
-        else:
-            trend = "sell"
-        if trendBak != "" and trendBak != trend:
-            sendEmail("趋势发生改变:" + trendBak + "->" + trend)
-            if symbol == "btc_cny":
-                if trend == "buy":
-                    setOrderInfo("buy")
-                else:
-                    setOrderInfo("sell", getCoinNum(symbol))
-                btcFun()
-            elif symbol == "ltc_cny":
-                if trend == "buy":
-                    setOrderInfo(trend)
-                else:
-                    setOrderInfo(trend, getCoinNum(symbol))
-                ltcFun()
-        trendBak = trend
-        print('ma7:%(ma7)s  ma30:%(ma30)s diff:%(diff)s' % {'ma7': ma7, 'ma30': ma30, 'diff': round(ma7 - ma30, 2)})
-        sys.stdout.flush()
+        strategy()
     except Exception as err:
         print(err)
     time.sleep(1)

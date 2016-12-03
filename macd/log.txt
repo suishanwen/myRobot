@@ -148,3 +148,27 @@ priceDiff: -2.62 transactionReward: -0.23 transactionBack: 499.77
  btc_cny buy 5454.610000000001 0.091 3.63 2016-12-03 11:35:55
  btc_cny sell 5454.73 0.091 -496.38 2016-12-03 11:36:03
 priceDiff: 0.12 transactionReward: 0.01 transactionBack: 500.01
+ btc_cny buy 5452.76 0.091 3.8 2016-12-03 12:06:59
+ btc_cny sell 5452.49 0.091 -496.18 2016-12-03 12:07:07
+priceDiff: -0.27 transactionReward: -0.02 transactionBack: 499.98
+ btc_cny buy 5452.63 0.091 3.81 2016-12-03 12:07:22
+ btc_cny sell 5453.61 0.091 -496.28 2016-12-03 12:07:57
+priceDiff: 0.98 transactionReward: 0.09 transactionBack: 500.09
+ btc_cny buy 5453.7300000000005 0.091 3.71 2016-12-03 12:08:12
+ btc_cny sell 5451.7699999999995 0.091 -496.11 2016-12-03 12:26:01
+priceDiff: -1.96 transactionReward: -0.18 transactionBack: 499.82
+ btc_cny buy 5446.24 0.091 4.39 2016-12-03 12:57:02
+ btc_cny sell 5443.09 0.091 -495.32 2016-12-03 13:03:56
+priceDiff: -3.15 transactionReward: -0.29 transactionBack: 499.71
+ btc_cny buy 5445.35 0.091 4.47 2016-12-03 13:04:38
+ btc_cny sell 5444.36 0.091 -495.44 2016-12-03 13:04:55
+priceDiff: -0.99 transactionReward: -0.09 transactionBack: 499.91
+ btc_cny buy 5432.15 0.092 0.24 2016-12-03 13:22:46
+ btc_cny sell 5431.37 0.092 -499.69 2016-12-03 13:25:56
+priceDiff: -0.78 transactionReward: -0.07 transactionBack: 499.93
+ btc_cny buy 5432.14 0.092 0.24 2016-12-03 13:26:24
+ btc_cny sell 5431.55 0.092 -499.7 2016-12-03 13:26:37
+priceDiff: -0.59 transactionReward: -0.06 transactionBack: 499.94
+ btc_cny buy 5432.3 0.092 0.23 2016-12-03 13:26:44
+ btc_cny sell 5431.55 0.092 -499.7 2016-12-03 13:26:49
+priceDiff: -0.75 transactionReward: -0.07 transactionBack: 499.93
