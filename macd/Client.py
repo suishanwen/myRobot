@@ -154,7 +154,7 @@ def trade(type, amount):
     price = getCoinPrice(symbol, type)
     if type == "buy":
         amount = getBuyAmount(price, 4)
-    if orderInfo["type"] == "sell" and amount < 0.01:
+    if type == "sell" and amount < 0.01:
         return 2
     orderId = makeOrder(symbol, type, price, amount)
     if orderId != "-1":
