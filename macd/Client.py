@@ -307,8 +307,10 @@ def currentVsMa():
         orderProcess()
     trendBak = trend
     print(
-        'current:%(current)s  ma%(currentType)s: diff:%(diff)s' % {'current': currentPrice, 'currentType': currentType,
-                                                                   'diff': round(currentPrice - ma, 2)}, end=" | ")
+        'current:%(current)s  ma%(currentType)s:%(ma)s diff:%(diff)s' % {'current': currentPrice,
+                                                                         'currentType': currentType, 'ma': ma,
+                                                                         'diff': round(currentPrice - ma, 2)},
+        end=" | ")
     sys.stdout.flush()
 
 
