@@ -253,18 +253,17 @@ def btcFun():
     if status != -2:
         setTransaction("minus")
         writeLog()
-        if getUnhandledAmount() == 0:  # 交易完成
-            if orderInfo["type"] == "buy":
-                buyPrice = orderInfo["price"]
-                transactionBack = transactionBack + orderInfo["transaction"]
-            else:
-                transactionBack = transactionBack - orderInfo["transaction"]
-                writeLog(' '.join(
-                    ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionReward:",
-                     str(round(transactionBack - transaction, 2)), "transactionBack:",
-                     str(round(transactionBack, 2))]))
-                transactionBack = 0
     if status == 2:
+        if orderInfo["type"] == "buy":
+            buyPrice = orderInfo["price"]
+            transactionBack = transactionBack + orderInfo["transaction"]
+        else:
+            transactionBack = transactionBack - orderInfo["transaction"]
+            writeLog(' '.join(
+                ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionReward:",
+                 str(round(transactionBack - transaction, 2)), "transactionBack:",
+                 str(round(transactionBack, 2))]))
+            transactionBack = 0
         showAccountInfo()
         showCurrentMarket()
     else:
@@ -278,17 +277,16 @@ def ltcFun():
     if status != -2:
         setTransaction("minus")
         writeLog()
-        if getUnhandledAmount() == 0:  # 交易完成
-            if orderInfo["type"] == "buy":
-                buyPrice = orderInfo["price"]
-                transactionBack = transactionBack + orderInfo["ransaction"]
-            else:
-                transactionBack = transactionBack - orderInfo["ransaction"]
-                writeLog(' '.join(
-                    ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionReward:",
-                     str(round(transactionBack - transaction, 2)), "transactionBack:", str(round(transactionBack, 2))]))
-                transactionBack = 0
     if status == 2:
+        if orderInfo["type"] == "buy":
+            buyPrice = orderInfo["price"]
+            transactionBack = transactionBack + orderInfo["ransaction"]
+        else:
+            transactionBack = transactionBack - orderInfo["ransaction"]
+            writeLog(' '.join(
+                ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionReward:",
+                 str(round(transactionBack - transaction, 2)), "transactionBack:", str(round(transactionBack, 2))]))
+            transactionBack = 0
         showAccountInfo()
         showCurrentMarket()
     else:
