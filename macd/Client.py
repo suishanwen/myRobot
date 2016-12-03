@@ -154,7 +154,7 @@ def trade(type, amount):
     if type == "buy":
         amount = getBuyAmount(price, 4)
     if orderInfo["type"] == "sell" and amount < 0.01:
-        return
+        return 2
     orderId = makeOrder(symbol, type, price, amount)
     if orderId != "-1":
         watiCount = 0
