@@ -62,6 +62,7 @@ def setDealAmount(dealAmount):
 
 def setTransaction(type):
     global orderInfo
+    print(orderInfo)
     if type == "plus":
         orderInfo['transaction'] = round(orderInfo['transaction'] + orderInfo['dealAmount'] * orderInfo['price'], 2)
     else:
@@ -100,6 +101,8 @@ def makeOrder(symbol, type, price, amount):
         return result['order_id']
     else:
         print("下单失败！", symbol, type, price, amount)
+        global  orderInfo
+        print (orderInfo)
         return "-1"
 
 
@@ -154,7 +157,7 @@ def trade(type, amount):
     price = getCoinPrice(symbol, type)
     if type == "buy":
         amount = getBuyAmount(price, 4)
-    if type == "sell" and amount < 0.01:
+    if  amount < 0.01:
         return 2
     orderId = makeOrder(symbol, type, price, amount)
     if orderId != "-1":
