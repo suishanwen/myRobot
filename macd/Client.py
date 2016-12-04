@@ -101,8 +101,8 @@ def makeOrder(symbol, type, price, amount):
         return result['order_id']
     else:
         print("下单失败！", symbol, type, price, amount)
-        global  orderInfo
-        print (orderInfo)
+        global orderInfo
+        print(orderInfo)
         return "-1"
 
 
@@ -115,7 +115,10 @@ def cancelOrder(symbol, orderId):
         print(u"订单", result['order_id'], "撤销成功")
     else:
         print(u"订单", orderId, "撤销失败！！！")
-    return checkOrderStatus(symbol, orderId)
+    status = checkOrderStatus(symbol, orderId)
+    if status != -1 and status != 2:
+        cancelOrder(symbol, orderId)
+    return status
 
 
 def checkOrderStatus(symbol, orderId, watiCount=0):
@@ -157,14 +160,14 @@ def trade(type, amount):
     price = getCoinPrice(symbol, type)
     if type == "buy":
         amount = getBuyAmount(price, 4)
-    if  amount < 0.01:
+    if amount < 0.01:
         return 2
     orderId = makeOrder(symbol, type, price, amount)
     if orderId != "-1":
         watiCount = 0
         status = 0
         global orderInfo
-        dealAmountBak=orderInfo["dealAmount"]
+        dealAmountBak = orderInfo["dealAmount"]
         while watiCount < (tradeWaitCount + 1) and status != 2:
             status = checkOrderStatus(symbol, orderId, watiCount)
             time.sleep(1)
