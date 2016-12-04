@@ -116,7 +116,7 @@ def cancelOrder(symbol, orderId):
     else:
         print(u"订单", orderId, "撤销失败！！！")
     status = checkOrderStatus(symbol, orderId)
-    if status != -1 and status != 2:
+    if status != -1 and status != 2:#未撤销成功或撤销失败（部分成交） 继续撤单
         cancelOrder(symbol, orderId)
     return status
 
