@@ -174,8 +174,8 @@ def trade(type, amount):
                 if getCoinPrice(symbol, type) == orderInfo["price"]:
                     watiCount -= int(tradeWaitCount / 3)
         if status != 2:
-            setDealAmount(dealAmountBak+orderInfo["dealAmount"])
             status = cancelOrder(symbol, orderId)
+            setDealAmount(dealAmountBak + orderInfo["dealAmount"])
         return status
     else:
         return -2
