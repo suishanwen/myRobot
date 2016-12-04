@@ -57,7 +57,7 @@ def setPrice(price):
 
 def setDealAmount(dealAmount):
     global orderInfo
-    orderInfo['dealAmount'] = dealAmount
+    orderInfo['dealAmount'] =orderInfo['dealAmount']+ dealAmount
 
 
 def setTransaction(type):
