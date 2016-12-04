@@ -57,7 +57,7 @@ def setPrice(price):
 
 def setDealAmount(dealAmount):
     global orderInfo
-    orderInfo['dealAmount'] =orderInfo['dealAmount']+ dealAmount
+    orderInfo['dealAmount'] = dealAmount
 
 
 def setTransaction(type):
@@ -163,6 +163,8 @@ def trade(type, amount):
     if orderId != "-1":
         watiCount = 0
         status = 0
+        global orderInfo
+        dealAmountBak=orderInfo["dealAmount"]
         while watiCount < (tradeWaitCount + 1) and status != 2:
             status = checkOrderStatus(symbol, orderId, watiCount)
             time.sleep(1)
@@ -172,6 +174,7 @@ def trade(type, amount):
                 if getCoinPrice(symbol, type) == orderInfo["price"]:
                     watiCount -= int(tradeWaitCount / 3)
         if status != 2:
+            setDealAmount(dealAmountBak+orderInfo["dealAmount"])
             status = cancelOrder(symbol, orderId)
         return status
     else:
