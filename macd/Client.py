@@ -116,7 +116,7 @@ def cancelOrder(symbol, orderId):
     else:
         print(u"订单", orderId, "撤销失败！！！")
     status = checkOrderStatus(symbol, orderId)
-    if status != -1 and status != 2:#未撤销成功或撤销失败（部分成交） 继续撤单
+    if status != -1 and status != 2:  # 未撤销成功或撤销失败（部分成交） 继续撤单
         cancelOrder(symbol, orderId)
     return status
 
@@ -262,7 +262,7 @@ def orderProcess():
                  str(round(transactionBack, 2))]))
             transactionBack = 0
         showAccountInfo()
-    else:
+    elif orderInfo["dealAmount"] != 0:
         orderProcess()
 
 
@@ -304,7 +304,7 @@ def currentVsMa():
     global trendBak, currentType
     ma = getMA(int(currentType))
     currentPrice = getCoinPrice(symbol, "buy")
-    if currentPrice > ma:
+    if currentPrice - ma > -0.5:
         trend = "buy"
     else:
         trend = "sell"
