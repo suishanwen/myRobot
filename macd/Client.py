@@ -156,7 +156,7 @@ def checkOrderStatus(symbol, orderId, watiCount=0):
 
 
 def trade(type, amount):
-    global tradeWaitCount, symbol
+    global tradeWaitCount, symbol,orderInfo
     price = getCoinPrice(symbol, type)
     if type == "buy":
         amount = getBuyAmount(price, 4)
@@ -173,7 +173,6 @@ def trade(type, amount):
             time.sleep(1)
             watiCount += 1
             if watiCount == tradeWaitCount and status != 2:
-                global orderInfo
                 if getCoinPrice(symbol, type) == orderInfo["price"]:
                     watiCount -= int(tradeWaitCount / 3)
         if status != 2:
@@ -300,7 +299,7 @@ def ma7Vs30():
 
 
 def currentVsMa():
-    global trendBak, currentType
+    global trendBak, currentType,orderInfo
     ma = getMA(int(currentType))
     currentPrice = getCoinPrice(symbol, "buy")
     if currentPrice - ma > -0.5:
@@ -314,7 +313,6 @@ def currentVsMa():
             if trend == "buy":
                 writeLog("-----------------------------------------------------------------------")
             orderProcess()
-            global orderInfo
             if orderInfo["dealAmount"] == 0:
                 trend = trendBak
     trendBak = trend
