@@ -264,6 +264,7 @@ def orderProcess():
         showAccountInfo()
     elif orderInfo["dealAmount"] != 0:
         orderProcess()
+    return status
 
 
 def getMA(param):
@@ -313,7 +314,9 @@ def currentVsMa():
             writeLog("-----------------------------------------------------------------------")
         # sendEmail("趋势发生改变:" + trendBak + "->" + trend)
         setOrderInfo(trend)
-        orderProcess()
+        status = orderProcess()
+        if status != 2:
+            trend = trendBak
     trendBak = trend
     print(
         'current:%(current)s  ma%(currentType)s:%(ma)s diff:%(diff)s' % {'current': currentPrice,
