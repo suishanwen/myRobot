@@ -186,9 +186,9 @@ def trade(type, amount):
 def getCoinPrice(symbol, type):
     if symbol == "btc_cny":
         if type == "buy":
-            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["buy"]) + 0.02, 2)
+            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["buy"]) + 0.1, 2)
         else:
-            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["sell"]) - 0.02, 2)
+            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["sell"]) - 0.1, 2)
     else:
         if type == "buy":
             return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["buy"]), 2)
@@ -302,7 +302,7 @@ def currentVsMa():
     global trendBak, currentType,orderInfo
     ma = getMA(int(currentType))
     currentPrice = getCoinPrice(symbol, "buy")
-    if currentPrice - ma > 0.5:
+    if currentPrice - ma > -0.5:
         trend = "buy"
     else:
         trend = "sell"
