@@ -26,6 +26,7 @@ symbol = config.get("kline", "symbol")
 type = config.get("kline", "type")
 cross = config.get("kline", "cross")
 currentType = config.get("kline", "currentType")
+shift = float(config.get("kline", "shift"))
 transaction = float(config.get("trade", "transaction"))
 tradeWaitCount = int(config.get("trade", "tradeWaitCount"))
 # 全局变量
@@ -156,7 +157,7 @@ def checkOrderStatus(symbol, orderId, watiCount=0):
 
 
 def trade(type, amount):
-    global tradeWaitCount, symbol,orderInfo
+    global tradeWaitCount, symbol, orderInfo
     price = getCoinPrice(symbol, type)
     if type == "buy":
         amount = getBuyAmount(price, 4)
@@ -264,6 +265,7 @@ def orderProcess():
     elif orderInfo["dealAmount"] != 0:
         orderProcess()
 
+
 def getMA(param):
     ms = int(time.time() * 1000)
     if type == "15min":
@@ -299,10 +301,19 @@ def ma7Vs30():
 
 
 def currentVsMa():
-    global trendBak, currentType,orderInfo
+    global trendBak, currentType, orderInfo, shift
     ma = getMA(int(currentType))
     currentPrice = getCoinPrice(symbol, "buy")
-    if currentPrice - ma > -0.5:
+    diff = currentPrice - ma
+    if diff > 5:
+        shift = - 1.3 * float(config.get("kline", "shift"))
+    elif diff > 3 and shift < 0:
+        shift = -0.5 * float(config.get("kline", "shift"))
+    elif diff < -3 and shift > 0:
+        shift = 0.5 * float(config.get("kline", "shift"))
+    elif diff < -5:
+        shift = 1.3 * float(config.get("kline", "shift"))
+    if diff > shift:
         trend = "buy"
     else:
         trend = "sell"
