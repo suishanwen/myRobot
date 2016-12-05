@@ -308,14 +308,15 @@ def currentVsMa():
     else:
         trend = "sell"
     if trendBak != "" and trendBak != trend:
-        if trend == "buy":
-            writeLog("-----------------------------------------------------------------------")
         # sendEmail("趋势发生改变:" + trendBak + "->" + trend)
         setOrderInfo(trend)
-        orderProcess()
-        global orderInfo
-        if orderInfo["dealAmount"] == 0:
-            trend = trendBak
+        if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
+            if trend == "buy":
+                writeLog("-----------------------------------------------------------------------")
+            orderProcess()
+            global orderInfo
+            if orderInfo["dealAmount"] == 0:
+                trend = trendBak
     trendBak = trend
     print(
         'current:%(current)s  ma%(currentType)s:%(ma)s diff:%(diff)s' % {'current': currentPrice,
