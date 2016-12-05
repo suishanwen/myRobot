@@ -264,8 +264,6 @@ def orderProcess():
         showAccountInfo()
     elif orderInfo["dealAmount"] != 0:
         orderProcess()
-    return status
-
 
 def getMA(param):
     ms = int(time.time() * 1000)
@@ -314,8 +312,9 @@ def currentVsMa():
             writeLog("-----------------------------------------------------------------------")
         # sendEmail("趋势发生改变:" + trendBak + "->" + trend)
         setOrderInfo(trend)
-        status = orderProcess()
-        if status != 2:
+        orderProcess()
+        global orderInfo
+        if orderInfo["dealAmount"] == 0:
             trend = trendBak
     trendBak = trend
     print(
