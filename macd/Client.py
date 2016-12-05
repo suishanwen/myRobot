@@ -315,6 +315,7 @@ def currentVsMa():
             orderProcess()
             if orderInfo["dealAmount"] == 0:
                 trend = trendBak
+                writeLog("#orderCanceled")
     trendBak = trend
     print(
         'current:%(current)s  ma%(currentType)s:%(ma)s diff:%(diff)s' % {'current': currentPrice,
