@@ -223,25 +223,6 @@ def showAccountInfo():
         print("showAccountInfo Fail,Try again!")
         showAccountInfo()
 
-
-def showCurrentMarket(sleepCount=0):
-    btc = okcoinSpot.ticker('btc_cny')
-    ltc = okcoinSpot.ticker('ltc_cny')
-    btcTicker = btc["ticker"]
-    ltcTicker = ltc["ticker"]
-    if sleepCount > 0:
-        print(u"BTC 买一", btcTicker["buy"], "卖一", btcTicker["sell"], "LTC 买一", ltcTicker["buy"], "卖一", ltcTicker["sell"])
-    else:
-        print(
-            u'----------------------------------------------现货行情-----------------------------------------------------')
-        print(u"BTC 买一", btcTicker["buy"], "卖一", btcTicker["sell"], "  24H 高", btcTicker["high"], "低", btcTicker["low"],
-              "成交",
-              btcTicker["vol"], "        ", fromTimeStamp(btc['date']))
-        print(u"LTC 买一", ltcTicker["buy"], "卖一", ltcTicker["sell"], "  24H 高", ltcTicker["high"], "低", ltcTicker["low"],
-              "成交",
-              ltcTicker["vol"], "        ", fromTimeStamp(ltc['date']))
-
-
 def orderProcess():
     global orderInfo, buyPrice, transactionBack, transaction
     amount = getUnhandledAmount()
