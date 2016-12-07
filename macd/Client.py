@@ -25,10 +25,10 @@ okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
 symbol = config.get("kline", "symbol")
 type = config.get("kline", "type")
 cross = config.get("kline", "cross")
-currentType = config.get("kline", "currentType")
-maType = config.get("kline", "maType")
-ma1 = int(maType.split("|")[0])
-ma2 = int(maType.split("|")[1])
+ma1 = cross.split("|")[0]
+if ma1 != "cross":
+    ma1 = int(ma1)
+ma2 = int(cross.split("|")[1])
 shift = float(config.get("kline", "shift"))
 transaction = float(config.get("trade", "transaction"))
 tradeWaitCount = int(config.get("trade", "tradeWaitCount"))
@@ -285,15 +285,16 @@ def maXVsMaX():
             trend = trendBak
             writeLog("#orderCanceled")
     trendBak = trend
-    print('ma%(ma1)s:%(maU)s  ma%(ma2)s:%(maL)s diff:%(diff)s' % {'ma1': ma1,'maU': maU,'ma2': ma2,'maL': maL,'diff': round(diff, 2)})
+    print('ma%(ma1)s:%(maU)s  ma%(ma2)s:%(maL)s diff:%(diff)s' % {'ma1': ma1, 'maU': maU, 'ma2': ma2, 'maL': maL,
+                                                                  'diff': round(diff, 2)})
     sys.stdout.flush()
 
 
 def currentVsMa():
-    global trendBak, currentType, orderInfo, shift
-    ma = getMA(int(currentType))
-    currentPrice = getCoinPrice(symbol, "buy")
-    diff = currentPrice - ma
+    global trendBak, orderInfo, shift
+    current = getCoinPrice(symbol, "buy")
+    ma = getMA(ma2)
+    diff = current - ma
     if diff > 5:
         shift = - 1.3 * float(config.get("kline", "shift"))
     elif diff > 3 and shift < 0:
@@ -318,8 +319,8 @@ def currentVsMa():
                 writeLog("#orderCanceled")
     trendBak = trend
     print(
-        'current:%(current)s  ma%(currentType)s:%(ma)s diff:%(diff)s' % {'current': currentPrice,
-                                                                         'currentType': currentType, 'ma': ma,
+        'current:%(current)s  ma%(ma2)s:%(ma)s diff:%(diff)s' % {'current': current,
+                                                                         'ma2': ma2, 'ma': ma,
                                                                          'diff': round(diff, 2)},
         end=" | ")
     sys.stdout.flush()
@@ -328,7 +329,7 @@ def currentVsMa():
 showAccountInfo()
 while True:
     strategy = maXVsMaX
-    if cross == "current":
+    if ma1 == "current":
         strategy = currentVsMa
     try:
         strategy()
