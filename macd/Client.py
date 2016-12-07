@@ -276,11 +276,14 @@ def maXVsMaX():
     else:
         trend = "sell"
     if trendBak != "" and trendBak != trend:
+        sendEmail("趋势发生改变:" + str(maU) + " VS " + str(maL))
+        setOrderInfo(trend)
         if trend == "buy":
             writeLog("-----------------------------------------------------------------------")
-        sendEmail("趋势发生改变:" + trendBak + "->" + trend)
-        setOrderInfo(trend)
         orderProcess()
+        if orderInfo["dealAmount"] == 0:
+            trend = trendBak
+            writeLog("#orderCanceled")
     trendBak = trend
     print('ma%(ma1)s:%(maU)s  ma%(ma2)s:%(maL)s diff:%(diff)s' % {'ma1': ma1,'maU': maU,'ma2': ma2,'maL': maL,'diff': round(diff, 2)})
     sys.stdout.flush()
