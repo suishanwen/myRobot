@@ -26,6 +26,9 @@ symbol = config.get("kline", "symbol")
 type = config.get("kline", "type")
 cross = config.get("kline", "cross")
 currentType = config.get("kline", "currentType")
+maType = config.get("kline", "maType")
+ma1 = int(maType.split("|")[0])
+ma2 = int(maType.split("|")[1])
 shift = float(config.get("kline", "shift"))
 transaction = float(config.get("trade", "transaction"))
 tradeWaitCount = int(config.get("trade", "tradeWaitCount"))
@@ -223,6 +226,7 @@ def showAccountInfo():
         print("showAccountInfo Fail,Try again!")
         showAccountInfo()
 
+
 def orderProcess():
     global orderInfo, buyPrice, transactionBack, transaction
     amount = getUnhandledAmount()
@@ -262,11 +266,12 @@ def getMA(param):
     return round(ma / param, 2)
 
 
-def ma7Vs30():
+def maXVsMaX():
     global trendBak
-    ma7 = getMA(7)
-    ma30 = getMA(30)
-    if ma7 > ma30:
+    maU = getMA(ma1)
+    maL = getMA(ma2)
+    diff = maU - maL
+    if diff > shift:
         trend = "buy"
     else:
         trend = "sell"
@@ -277,7 +282,7 @@ def ma7Vs30():
         setOrderInfo(trend)
         orderProcess()
     trendBak = trend
-    print('ma7:%(ma7)s  ma30:%(ma30)s diff:%(diff)s' % {'ma7': ma7, 'ma30': ma30, 'diff': round(ma7 - ma30, 2)})
+    print('ma%(ma1)s:%(maU)s  ma%(ma2)s:%(maL)s diff:%(diff)s' % {'ma1': ma1,'maU': maU,'ma2': ma2,'maL': maL,'diff': round(diff, 2)})
     sys.stdout.flush()
 
 
@@ -312,14 +317,14 @@ def currentVsMa():
     print(
         'current:%(current)s  ma%(currentType)s:%(ma)s diff:%(diff)s' % {'current': currentPrice,
                                                                          'currentType': currentType, 'ma': ma,
-                                                                         'diff': round(currentPrice - ma, 2)},
+                                                                         'diff': round(diff, 2)},
         end=" | ")
     sys.stdout.flush()
 
 
 showAccountInfo()
 while True:
-    strategy = ma7Vs30
+    strategy = maXVsMaX
     if cross == "current":
         strategy = currentVsMa
     try:
