@@ -255,6 +255,8 @@ def getMA(param):
     ms = int(time.time() * 1000)
     if type == "15min":
         ms -= param * 15 * 60 * 1000
+    elif type == "5min":
+        ms -= param * 5 * 60 * 1000
     elif type == "1min":
         ms -= param * 1 * 60 * 1000
     data = okcoinSpot.klines(symbol, type, param, ms)
@@ -276,7 +278,7 @@ def maXVsMaX():
     else:
         trend = "sell"
     if trendBak != "" and trendBak != trend:
-        sendEmail("趋势发生改变:" + str(maU) + " VS " + str(maL))
+        # sendEmail("趋势发生改变:" + str(maU) + " VS " + str(maL))
         setOrderInfo(trend)
         if trend == "buy":
             writeLog("-----------------------------------------------------------------------")
