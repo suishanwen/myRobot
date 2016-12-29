@@ -22257,5 +22257,3 @@ priceDiff: -2.97 transactionReward: -0.04 transactionBack: 99.96
  btc_cny buy 6942.29 0.014 2.81 2016-12-29 15:28:16
  btc_cny sell 6942.44 0.014 -97.19 2016-12-29 15:28:56
 priceDiff: 0.15 transactionReward: 0.0 transactionBack: 100.0
------------------------------------------------------------------------
- btc_cny buy 6950.71 0.014 2.69 2016-12-29 15:29:19
