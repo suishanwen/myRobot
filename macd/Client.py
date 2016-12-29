@@ -32,6 +32,8 @@ ma2 = int(cross.split("|")[1])
 shift = float(config.get("kline", "shift"))
 transaction = float(config.get("trade", "transaction"))
 tradeWaitCount = int(config.get("trade", "tradeWaitCount"))
+orderDiff = float(config.get("trade", "orderDiff"))
+
 # 全局变量
 orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "dealAmount": 0, "transaction": 0}
 buyPrice = 0
@@ -190,14 +192,14 @@ def trade(type, amount):
 def getCoinPrice(symbol, type):
     if symbol == "btc_cny":
         if type == "buy":
-            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["buy"]) + 0.1, 2)
+            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["buy"]) + orderDiff, 2)
         else:
-            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["sell"]) - 0.1, 2)
+            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["sell"]) - orderDiff, 2)
     else:
         if type == "buy":
-            return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["buy"]), 2)
+            return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["buy"]) + orderDiff, 2)
         else:
-            return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["sell"]), 2)
+            return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["sell"] - orderDiff), 2)
 
 
 def writeLog(text=""):
@@ -297,14 +299,6 @@ def currentVsMa():
     current = getCoinPrice(symbol, "buy")
     ma = getMA(ma2)
     diff = current - ma
-    if diff > 5:
-        shift = - 1.3 * float(config.get("kline", "shift"))
-    elif diff > 3 and shift < 0:
-        shift = -0.5 * float(config.get("kline", "shift"))
-    elif diff < -3 and shift > 0:
-        shift = 0.5 * float(config.get("kline", "shift"))
-    elif diff < -5:
-        shift = 1.3 * float(config.get("kline", "shift"))
     if diff > shift:
         trend = "buy"
     else:
@@ -323,8 +317,7 @@ def currentVsMa():
     print(
         'current:%(current)s  ma%(ma2)s:%(ma)s diff:%(diff)s' % {'current': current,
                                                                          'ma2': ma2, 'ma': ma,
-                                                                         'diff': round(diff, 2)},
-        end=" | ")
+                                                                         'diff': round(diff, 2)})
     sys.stdout.flush()
 
 
