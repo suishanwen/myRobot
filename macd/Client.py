@@ -271,7 +271,7 @@ def getMA(param):
 
 
 def maXVsMaX():
-    global trendBak
+    global trendBak,shift
     maU = getMA(ma1)
     maL = getMA(ma2)
     diff = maU - maL
@@ -288,6 +288,10 @@ def maXVsMaX():
         if orderInfo["dealAmount"] == 0:
             trend = trendBak
             writeLog("#orderCanceled")
+        elif trend == "buy":
+            shift = float(config.get("kline", "shift")) / 2
+        elif trend == "sell":
+            shift = float(config.get("kline", "shift"))
     trendBak = trend
     print('ma%(ma1)s:%(maU)s  ma%(ma2)s:%(maL)s diff:%(diff)s' % {'ma1': ma1, 'maU': maU, 'ma2': ma2, 'maL': maL,
                                                                   'diff': round(diff, 2)})
@@ -313,6 +317,10 @@ def currentVsMa():
             if orderInfo["dealAmount"] == 0:
                 trend = trendBak
                 writeLog("#orderCanceled")
+            elif trend == "buy":
+                shift = float(config.get("kline", "shift")) / 2
+            elif trend == "sell":
+                shift = float(config.get("kline", "shift"))
     trendBak = trend
     print(
         'current:%(current)s  ma%(ma2)s:%(ma)s diff:%(diff)s' % {'current': current,
