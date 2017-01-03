@@ -36,6 +36,7 @@ orderDiff = float(config.get("trade", "orderDiff"))
 
 # 全局变量
 orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "avgPrice": 0, "dealAmount": 0, "transaction": 0}
+orderList=[]
 buyPrice = 0
 transactionBack = 0
 trendBak = ""
@@ -129,6 +130,11 @@ def cancelOrder(symbol, orderId):
         cancelOrder(symbol, orderId)
     return status
 
+def addOrderList(order):
+    global orderList
+    orderList = list(filter(lambda orderIn: orderIn["order_id"] != order["order_id"], orderList))
+    if order["status"]==1 or order["status"]==2:
+        orderList.append(order)
 
 def checkOrderStatus(symbol, orderId, watiCount=0):
     orderResult = okcoinSpot.orderinfo(symbol, orderId)
@@ -140,6 +146,7 @@ def checkOrderStatus(symbol, orderId, watiCount=0):
             status = order["status"]
             setDealAmount(order["deal_amount"])
             setAvgPrice(order["avg_price"])
+            addOrderList(order)
             if status == -1:
                 print("订单", orderId, "已撤销")
             elif status == 0:
@@ -247,6 +254,7 @@ def orderProcess():
             transactionBack = transactionBack + orderInfo["transaction"]
         else:
             transactionBack = transactionBack - orderInfo["transaction"]
+            print(orderList)
             writeLog(' '.join(
                 ["priceDiff:", str(round(orderInfo["avgPrice"] - buyPrice, 2)), "transactionReward:",
                  str(round(transactionBack - transaction, 2)), "transactionBack:",
@@ -275,7 +283,7 @@ def getMA(param):
 
 
 def maXVsMaX():
-    global trendBak,shift
+    global trendBak,shift,orderList
     maU = getMA(ma1)
     maL = getMA(ma2)
     diff = maU - maL
@@ -286,6 +294,7 @@ def maXVsMaX():
     if trendBak != "" and trendBak != trend:
         # sendEmail("趋势发生改变:" + str(maU) + " VS " + str(maL))
         setOrderInfo(trend)
+        orderList=[]
         if trend == "buy":
             writeLog("-----------------------------------------------------------------------")
         orderProcess()
@@ -303,7 +312,7 @@ def maXVsMaX():
 
 
 def currentVsMa():
-    global trendBak, orderInfo, shift
+    global trendBak, orderInfo, shift,orderList
     current = getCoinPrice(symbol, "buy")
     ma = getMA(ma2)
     diff = current - ma
@@ -313,6 +322,7 @@ def currentVsMa():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         # sendEmail("趋势发生改变:" + trendBak + "->" + trend)
+        orderList=[]
         setOrderInfo(trend)
         if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
             if trend == "buy":
