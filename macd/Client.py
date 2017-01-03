@@ -35,7 +35,7 @@ tradeWaitCount = int(config.get("trade", "tradeWaitCount"))
 orderDiff = float(config.get("trade", "orderDiff"))
 
 # 全局变量
-orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "dealAmount": 0, "transaction": 0}
+orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "avgPrice": 0, "dealAmount": 0, "transaction": 0}
 buyPrice = 0
 transactionBack = 0
 trendBak = ""
@@ -60,6 +60,9 @@ def setPrice(price):
     global orderInfo
     orderInfo['price'] = price
 
+def setAvgPrice(avgPrice):
+    global orderInfo
+    orderInfo['avgPrice'] = avgPrice
 
 def setDealAmount(dealAmount):
     global orderInfo
@@ -70,9 +73,9 @@ def setTransaction(type):
     global orderInfo
     print(orderInfo)
     if type == "plus":
-        orderInfo['transaction'] = round(orderInfo['transaction'] + orderInfo['dealAmount'] * orderInfo['price'], 2)
+        orderInfo['transaction'] = round(orderInfo['transaction'] + orderInfo['dealAmount'] * orderInfo['avgPrice'], 2)
     else:
-        orderInfo['transaction'] = round(orderInfo['transaction'] - orderInfo['dealAmount'] * orderInfo['price'], 2)
+        orderInfo['transaction'] = round(orderInfo['transaction'] - orderInfo['dealAmount'] * orderInfo['avgPrice'], 2)
 
 
 def getBuyAmount(price, accuracy=2):
@@ -136,6 +139,7 @@ def checkOrderStatus(symbol, orderId, watiCount=0):
             orderId = order["order_id"]
             status = order["status"]
             setDealAmount(order["deal_amount"])
+            setAvgPrice(order["avg_price"])
             if status == -1:
                 print("订单", orderId, "已撤销")
             elif status == 0:
@@ -207,7 +211,7 @@ def writeLog(text=""):
     f = open(r'log.txt', 'a')
     if text == "":
         f.writelines(' '.join(
-            ["\n", orderInfo["symbol"], orderInfo["type"], str(orderInfo["price"]), str(orderInfo["dealAmount"]),
+            ["\n", orderInfo["symbol"], orderInfo["type"], str(orderInfo["price"]), str(orderInfo["avgPrice"]), str(orderInfo["dealAmount"]),
              str(orderInfo["transaction"]), str(fromTimeStamp(int(time.time())))]))
     else:
         f.writelines("\n" + text)
@@ -239,12 +243,12 @@ def orderProcess():
         writeLog()
     if status == 2:
         if orderInfo["type"] == "buy":
-            buyPrice = orderInfo["price"]
+            buyPrice = orderInfo["avgPrice"]
             transactionBack = transactionBack + orderInfo["transaction"]
         else:
             transactionBack = transactionBack - orderInfo["transaction"]
             writeLog(' '.join(
-                ["priceDiff:", str(round(orderInfo["price"] - buyPrice, 2)), "transactionReward:",
+                ["priceDiff:", str(round(orderInfo["avgPrice"] - buyPrice, 2)), "transactionReward:",
                  str(round(transactionBack - transaction, 2)), "transactionBack:",
                  str(round(transactionBack, 2))]))
             transactionBack = 0
