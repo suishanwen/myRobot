@@ -1,27 +1,27 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # encoding: utf-8
-# 客户端调用，用于查看API返回结果
 
-import time, sys, configparser
-
+import time, sys, configparser,importlib
+sys.path.append("/home/python")
+importlib.reload(sys)
 from util.MyUtil import fromDict, fromTimeStamp, sendEmail
 from api.OkcoinSpotAPI import OKCoinSpot
 
-# 读取配置文件
+# read config
 config = configparser.ConfigParser()
 config.read("../key.ini")
 config.read("config.ini")
 
-# 初始化apikey，secretkey,url
+# init apikey，secretkey,url
 apikey = config.get("okcoin", "apikey")
 secretkey = config.get("okcoin", "secretkey")
-okcoinRESTURL = 'www.okcoin.cn'  # 请求注意：国内账号需要 修改为 www.okcoin.cn
+okcoinRESTURL = 'www.okcoin.cn'
 
-# 现货API
+# currentAPI
 okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
 
-# 获取配置
+# getConfig
 symbol = config.get("kline", "symbol")
 type = config.get("kline", "type")
 cross = config.get("kline", "cross")
@@ -34,7 +34,7 @@ transaction = float(config.get("trade", "transaction"))
 tradeWaitCount = int(config.get("trade", "tradeWaitCount"))
 orderDiff = float(config.get("trade", "orderDiff"))
 
-# 全局变量
+# global variable
 orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "avgPrice": 0, "dealAmount": 0, "transaction": 0}
 orderList=[]
 buyPrice = 0
@@ -103,30 +103,28 @@ def getCoinNum(symbol):
 
 
 def makeOrder(symbol, type, price, amount):
-    print(u'\n-----------------------------------------------现货下单----------------------------------------------------')
+    print(u'\n---------------------------------------------spot order--------------------------------------------------')
     result = okcoinSpot.trade(symbol, type, price, amount)
     if result['result']:
         setPrice(price)
         print("OrderId", result['order_id'], symbol, type, price, amount, "  ", fromTimeStamp(int(time.time())))
         return result['order_id']
     else:
-        print("下单失败！", symbol, type, price, amount)
+        print("order failed！", symbol, type, price, amount)
         global orderInfo
         print(orderInfo)
         return "-1"
 
 
-# print (u' 现货批量下单 ')
-# print (okcoinSpot.batchTrade('ltc_usd','buy','[{price:0.1,amount:0.2},{price:0.1,amount:0.2}]'))
 def cancelOrder(symbol, orderId):
-    print(u'\n---------------------------------------------现货取消订单--------------------------------------------------')
+    print(u'\n-----------------------------------------spot cancel order----------------------------------------------')
     result = okcoinSpot.cancelOrder(symbol, orderId)
     if result['result']:
-        print(u"订单", result['order_id'], "撤销成功")
+        print(u"order", result['order_id'], "canceled")
     else:
-        print(u"订单", orderId, "撤销失败！！！")
+        print(u"order", orderId, "cancel failed！！！")
     status = checkOrderStatus(symbol, orderId)
-    if status != -1 and status != 2:  # 未撤销成功或撤销失败（部分成交） 继续撤单
+    if status != -1 and status != 2:  # not canceled or cancel failed(part dealed) continue cancel
         cancelOrder(symbol, orderId)
     return status
 
@@ -148,27 +146,27 @@ def checkOrderStatus(symbol, orderId, watiCount=0):
             setAvgPrice(order["avg_price"])
             addOrderList(order)
             if status == -1:
-                print("订单", orderId, "已撤销")
+                print("order", orderId, "canceled")
             elif status == 0:
                 if watiCount == 30:
-                    print("超时未成交")
+                    print("timeout no deal")
                 else:
-                    print("未成交", end=" ")
+                    print("no deal", end=" ")
                     sys.stdout.flush()
             elif status == 1:
                 global orderInfo
                 if watiCount == 30:
-                    print("部分成交 ", orderInfo["dealAmount"])
+                    print("part dealed ", orderInfo["dealAmount"])
                 else:
-                    print("部分成交 ", orderInfo["dealAmount"], end=" ")
+                    print("part dealed ", orderInfo["dealAmount"], end=" ")
                     sys.stdout.flush()
             elif status == 2:
-                print("订单", orderId, "完全成交")
+                print("order", orderId, "complete deal")
             elif status == 3:
-                print("订单", orderId, "撤单处理中")
+                print("order", orderId, "canceling")
             return status
     else:
-        print(orderId, "未查询到订单信息")
+        print(orderId, " order not found")
         return -2
 
 
@@ -226,15 +224,15 @@ def writeLog(text=""):
 
 
 def showAccountInfo():
-    print(u'-----------------------------------------用户现货账户信息--------------------------------------------------')
+    print(u'---------------------------------------spot account info------------------------------------------------')
     myAccountInfo = okcoinSpot.userinfo()
     if myAccountInfo["result"]:
         asset = fromDict(myAccountInfo, "info", "funds", "asset")
         freezed = fromDict(myAccountInfo, "info", "funds", "freezed")
         free = fromDict(myAccountInfo, "info", "funds", "free")
-        print(u"RMB总金额", asset["total"], "可用", free["cny"], "冻结", freezed["cny"])
-        print(u"BTC可用数量", free["btc"], "冻结数量", freezed["btc"])
-        print(u"LTC可用数量", free["ltc"], "冻结数量", freezed["ltc"])
+        print(u"RMB", asset["total"], "available", free["cny"], "freezed", freezed["cny"])
+        print(u"BTC", free["btc"], "freezed", freezed["btc"])
+        print(u"LTC", free["ltc"], "freezed", freezed["ltc"])
     else:
         print("showAccountInfo Fail,Try again!")
         showAccountInfo()
@@ -244,7 +242,7 @@ def orderProcess():
     global orderInfo, buyPrice, transactionBack, transaction
     amount = getUnhandledAmount()
     status = trade(orderInfo["type"], amount)
-    # 非下单失败
+    # dealed or part dealed
     if status != -2:
         setTransaction("minus")
         writeLog()
@@ -276,7 +274,7 @@ def getMA(param):
     data = okcoinSpot.klines(symbol, type, param, ms)
     ma = 0
     if len(data) != param:
-        raise Exception("等待数据...")
+        raise Exception("waiting data...")
     for line in data:
         ma += line[4]
     return round(ma / param, 2)
@@ -292,7 +290,7 @@ def maXVsMaX():
     else:
         trend = "sell"
     if trendBak != "" and trendBak != trend:
-        # sendEmail("趋势发生改变:" + str(maU) + " VS " + str(maL))
+        # sendEmail("trend changed:" + str(maU) + " VS " + str(maL))
         setOrderInfo(trend)
         if trend == "buy":
             orderList = []
@@ -321,7 +319,7 @@ def currentVsMa():
     else:
         trend = "sell"
     if trendBak != "" and trendBak != trend:
-        # sendEmail("趋势发生改变:" + trendBak + "->" + trend)
+        # sendEmail("trend changed:" + trendBak + "->" + trend)
         setOrderInfo(trend)
         if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
             if trend == "buy":
