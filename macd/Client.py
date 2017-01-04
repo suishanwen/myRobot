@@ -294,8 +294,8 @@ def maXVsMaX():
     if trendBak != "" and trendBak != trend:
         # sendEmail("趋势发生改变:" + str(maU) + " VS " + str(maL))
         setOrderInfo(trend)
-        orderList=[]
         if trend == "buy":
+            orderList = []
             writeLog("-----------------------------------------------------------------------")
         orderProcess()
         if orderInfo["dealAmount"] == 0:
@@ -322,10 +322,10 @@ def currentVsMa():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         # sendEmail("趋势发生改变:" + trendBak + "->" + trend)
-        orderList=[]
         setOrderInfo(trend)
         if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
             if trend == "buy":
+                orderList = []
                 writeLog("-----------------------------------------------------------------------")
             orderProcess()
             if orderInfo["dealAmount"] == 0:
