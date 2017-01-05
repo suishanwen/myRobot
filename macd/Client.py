@@ -10,13 +10,14 @@ from util.MyUtil import fromDict, fromTimeStamp, sendEmail
 from api.OkcoinSpotAPI import OKCoinSpot
 
 # read config
+configBase = configparser.ConfigParser()
 config = configparser.ConfigParser()
-config.read("../key.ini")
+configBase.read("../key.ini")
 config.read("config.ini")
 
 # init apikey，secretkey,url
-apikey = config.get("okcoin", "apikey")
-secretkey = config.get("okcoin", "secretkey")
+apikey = configBase.get("okcoin", "apikey")
+secretkey = configBase.get("okcoin", "secretkey")
 okcoinRESTURL = 'www.okcoin.cn'
 
 # currentAPI
