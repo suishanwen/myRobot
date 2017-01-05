@@ -259,6 +259,7 @@ def calAvgReward(orderList):
         sellReward += order["deal_amount"] * order["avg_price"]
     sellAvg = sellReward / sellAmount
     avgReward = round(sellAvg - buyAvg, 2)
+    config.read("config.ini")
     totalReward = round(float(config.get("trade", "avgreward")) + avgReward, 2)
     config.set("trade", "avgreward", str(totalReward))
     fp = open("config.ini", "w")
