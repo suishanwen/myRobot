@@ -250,12 +250,14 @@ def calAvgReward(orderList):
     buyAmount = 0
     buyCost = 0
     for order in orderBuyList:
+        global buyAmount,buyCost
         buyAmount += order["deal_amount"]
         buyCost += order["deal_amount"] * order["avg_price"]
     buyAvg = buyCost / buyAmount
     sellAmount = 0
     sellReward = 0
     for order in orderSellList:
+        global sellAmount,sellReward
         sellAmount += order["deal_amount"]
         sellReward += order["deal_amount"] * order["avg_price"]
     sellAvg = sellReward / sellAmount
