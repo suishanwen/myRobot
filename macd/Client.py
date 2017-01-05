@@ -332,7 +332,7 @@ def maXVsMaX():
 
 
 def currentVsMa():
-    global trendBak, orderInfo, shift, orderList
+    global trendBak, orderInfo, shift, orderList,ma2
     current = round(getCoinPrice(symbol, "buy") - orderDiff, 2)
     ma = getMA(ma2)
     diff = current - ma
@@ -361,6 +361,16 @@ def currentVsMa():
                                                                  'ma2': ma2, 'ma': ma,
                                                                  'diff': round(diff, 2)})
     sys.stdout.flush()
+    # adjust ma2
+    if symbol == "btc_cny" and ma2 == 30 and diff < -150:
+        ma2 = 15
+        print("##### diff too heigh adjust ma2 to 15 #####")
+        writeLog("##### diff too heigh adjust ma2 to 15 #####")
+    elif symbol == "btc_cny" and ma2 == 15 and diff > 75:
+        ma2 = 30
+        print("##### diff too heigh adjust ma2 to 30 #####")
+        writeLog("##### diff too heigh adjust ma2 to 30 #####")
+
 
 
 showAccountInfo()
