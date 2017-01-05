@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 # encoding: utf-8
 
-import time, sys, configparser,importlib
+import time, sys, configparser, importlib
+
 sys.path.append("/home/python")
 importlib.reload(sys)
 from util.MyUtil import fromDict, fromTimeStamp, sendEmail
@@ -36,9 +37,7 @@ orderDiff = float(config.get("trade", "orderDiff"))
 
 # global variable
 orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "avgPrice": 0, "dealAmount": 0, "transaction": 0}
-orderList=[]
-buyPrice = 0
-transactionBack = 0
+orderList = []
 trendBak = ""
 
 
@@ -61,9 +60,11 @@ def setPrice(price):
     global orderInfo
     orderInfo['price'] = price
 
+
 def setAvgPrice(avgPrice):
     global orderInfo
     orderInfo['avgPrice'] = avgPrice
+
 
 def setDealAmount(dealAmount):
     global orderInfo
@@ -103,7 +104,8 @@ def getCoinNum(symbol):
 
 
 def makeOrder(symbol, type, price, amount):
-    print(u'\n---------------------------------------------spot order--------------------------------------------------')
+    print(
+        u'\n---------------------------------------------spot order--------------------------------------------------')
     result = okcoinSpot.trade(symbol, type, price, amount)
     if result['result']:
         setPrice(price)
@@ -128,11 +130,13 @@ def cancelOrder(symbol, orderId):
         cancelOrder(symbol, orderId)
     return status
 
+
 def addOrderList(order):
     global orderList
     orderList = list(filter(lambda orderIn: orderIn["order_id"] != order["order_id"], orderList))
-    if order["status"]==1 or order["status"]==2:
+    if order["status"] == 1 or order["status"] == 2:
         orderList.append(order)
+
 
 def checkOrderStatus(symbol, orderId, watiCount=0):
     orderResult = okcoinSpot.orderinfo(symbol, orderId)
@@ -216,8 +220,9 @@ def writeLog(text=""):
     f = open(r'log.txt', 'a')
     if text == "":
         f.writelines(' '.join(
-            ["\n", orderInfo["symbol"], orderInfo["type"], str(orderInfo["price"]), str(orderInfo["avgPrice"]), str(orderInfo["dealAmount"]),
-             str(orderInfo["transaction"]), str(fromTimeStamp(int(time.time())))]))
+            ["\n", orderInfo["symbol"], orderInfo["type"], str(orderInfo["price"]), str(orderInfo["avgPrice"]),
+             str(orderInfo["dealAmount"]),
+             str(round(orderInfo["avgPrice"] * orderInfo["dealAmount"], 2)), str(fromTimeStamp(int(time.time())))]))
     else:
         f.writelines("\n" + text)
     f.close()
@@ -238,8 +243,33 @@ def showAccountInfo():
         showAccountInfo()
 
 
+def calAvgReward(orderList):
+    orderBuyList = list(filter(lambda orderIn: orderIn["type"] == 'buy', orderList))
+    orderSellList = list(filter(lambda orderIn: orderIn["type"] == 'sell', orderList))
+    buyAmount = 0
+    buyCost = 0
+    for order in orderBuyList:
+        buyAmount += order["deal_amount"]
+        buyCost += order["deal_amount"] * order["avg_price"]
+    buyAvg = buyCost / buyAmount
+    sellAmount = 0
+    sellReward = 0
+    for order in orderSellList:
+        sellAmount += order["deal_amount"]
+        sellReward += order["deal_amount"] * order["avg_price"]
+    sellAvg = sellReward / sellAmount
+    avgReward = round(sellAvg - buyAvg, 2)
+    totalReward = round(float(config.get("trade", "avgreward")) + avgReward, 2)
+    config.set("trade", "avgreward", str(totalReward))
+    fp = open("config.ini", "w")
+    config.write(fp)
+    writeLog(' '.join(
+        ["avgPriceDiff:", str(avgReward), "transactionReward:",
+         str(round(sellReward - buyCost, 2))]))
+
+
 def orderProcess():
-    global orderInfo, buyPrice, transactionBack, transaction
+    global orderInfo
     amount = getUnhandledAmount()
     status = trade(orderInfo["type"], amount)
     # dealed or part dealed
@@ -247,17 +277,9 @@ def orderProcess():
         setTransaction("minus")
         writeLog()
     if status == 2:
-        if orderInfo["type"] == "buy":
-            buyPrice = orderInfo["avgPrice"]
-            transactionBack = transactionBack + orderInfo["transaction"]
-        else:
-            transactionBack = transactionBack - orderInfo["transaction"]
+        if orderInfo["type"] == "sell":
             print(orderList)
-            writeLog(' '.join(
-                ["priceDiff:", str(round(orderInfo["avgPrice"] - buyPrice, 2)), "transactionReward:",
-                 str(round(transactionBack - transaction, 2)), "transactionBack:",
-                 str(round(transactionBack, 2))]))
-            transactionBack = 0
+            calAvgReward(orderList)
         showAccountInfo()
     elif orderInfo["dealAmount"] != 0:
         orderProcess()
@@ -281,7 +303,7 @@ def getMA(param):
 
 
 def maXVsMaX():
-    global trendBak,shift,orderList
+    global trendBak, shift, orderList
     maU = getMA(ma1)
     maL = getMA(ma2)
     diff = maU - maL
@@ -310,8 +332,8 @@ def maXVsMaX():
 
 
 def currentVsMa():
-    global trendBak, orderInfo, shift,orderList
-    current = round(getCoinPrice(symbol, "buy")-orderDiff,2)
+    global trendBak, orderInfo, shift, orderList
+    current = round(getCoinPrice(symbol, "buy") - orderDiff, 2)
     ma = getMA(ma2)
     diff = current - ma
     if diff > shift:
@@ -336,8 +358,8 @@ def currentVsMa():
     trendBak = trend
     print(
         'current:%(current)s  ma%(ma2)s:%(ma)s diff:%(diff)s' % {'current': current,
-                                                                         'ma2': ma2, 'ma': ma,
-                                                                         'diff': round(diff, 2)})
+                                                                 'ma2': ma2, 'ma': ma,
+                                                                 'diff': round(diff, 2)})
     sys.stdout.flush()
 
 
