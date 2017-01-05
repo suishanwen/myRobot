@@ -311,7 +311,7 @@ def maXVsMaX():
 
 def currentVsMa():
     global trendBak, orderInfo, shift,orderList
-    current = getCoinPrice(symbol, "buy")-orderDiff
+    current = round(getCoinPrice(symbol, "buy")-orderDiff,2)
     ma = getMA(ma2)
     diff = current - ma
     if diff > shift:
