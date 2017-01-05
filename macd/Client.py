@@ -208,7 +208,7 @@ def getCoinPrice(symbol, type):
         if type == "buy":
             return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["buy"]) + orderDiff, 2)
         else:
-            return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["sell"] - orderDiff), 2)
+            return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["sell"]) - orderDiff, 2)
 
 
 def writeLog(text=""):
