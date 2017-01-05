@@ -365,11 +365,11 @@ def currentVsMa():
                                                                  'diff': round(diff, 2)})
     sys.stdout.flush()
     # adjust ma2
-    if symbol == "btc_cny" and ma2 == 30 and diff < -150:
+    if symbol == "btc_cny" and ma2 == 30 and diff < -300:
         ma2 = 15
         print("##### diff too heigh adjust ma2 to 15 #####")
         writeLog("##### diff too heigh adjust ma2 to 15 #####")
-    elif symbol == "btc_cny" and ma2 == 15 and diff > 75:
+    elif symbol == "btc_cny" and ma2 == 15 and diff > 150:
         ma2 = 30
         print("##### diff too heigh adjust ma2 to 30 #####")
         writeLog("##### diff too heigh adjust ma2 to 30 #####")
