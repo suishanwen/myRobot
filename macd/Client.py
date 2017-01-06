@@ -401,6 +401,8 @@ def checkTransCount():
             ma2 -= 10
             if ma2 == int(config.get("kline", "cross").split("|")[1]):
                 transMode = "plus"
+        print("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
+        writeLog("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
     transCountBak = transCount
 
 
