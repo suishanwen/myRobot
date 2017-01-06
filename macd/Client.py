@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # encoding: utf-8
 
-import time, sys, configparser, importlib
+import time, sys, configparser, importlib, threading
 
 sys.path.append("/home/python")
 importlib.reload(sys)
@@ -40,7 +40,13 @@ orderDiff = float(config.get("trade", "orderDiff"))
 orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "avgPrice": 0, "dealAmount": 0, "transaction": 0}
 orderList = []
 trendBak = ""
-
+transCountBak = int(config.get("trade", "transcount"))
+buyAmount = 0
+buyCost = 0
+sellAmount = 0
+sellReward = 0
+transMode = "plus"
+toStopLoss = 0
 
 def setOrderInfo(type):
     global orderInfo, symbol
@@ -247,11 +253,11 @@ def showAccountInfo():
 def calAvgReward(orderList):
     orderBuyList = list(filter(lambda orderIn: orderIn["type"] == 'buy', orderList))
     orderSellList = list(filter(lambda orderIn: orderIn["type"] == 'sell', orderList))
+    global buyAmount, buyCost, sellAmount, sellReward
     buyAmount = 0
     buyCost = 0
     sellAmount = 0
     sellReward = 0
-    global buyAmount, buyCost,sellAmount,sellReward
     for order in orderBuyList:
         buyAmount += order["deal_amount"]
         buyCost += order["deal_amount"] * order["avg_price"]
@@ -264,6 +270,7 @@ def calAvgReward(orderList):
     config.read("config.ini")
     totalReward = round(float(config.get("trade", "avgreward")) + avgReward, 2)
     config.set("trade", "avgreward", str(totalReward))
+    config.set("trade", "transcount", str(int(config.get("trade", "transcount")) + 1))
     fp = open("config.ini", "w")
     config.write(fp)
     writeLog(' '.join(
@@ -335,7 +342,7 @@ def maXVsMaX():
 
 
 def currentVsMa():
-    global trendBak, orderInfo, shift, orderList,ma2
+    global trendBak, orderInfo, shift, orderList, ma2, toStopLoss
     current = round(getCoinPrice(symbol, "buy") - orderDiff, 2)
     ma = getMA(ma2)
     diff = current - ma
@@ -350,6 +357,11 @@ def currentVsMa():
             if trend == "buy":
                 orderList = []
                 writeLog("-----------------------------------------------------------------------")
+            else:
+                toStopLoss += 1
+                if 0 < diff < 2:
+                    print("Return : toStopLoss:%(toStopLoss)s diff:%(diff)s" % {'toStopLoss': toStopLoss, 'diff': diff})
+                    return
             orderProcess()
             if orderInfo["dealAmount"] == 0:
                 trend = trendBak
@@ -359,22 +371,41 @@ def currentVsMa():
             elif trend == "sell":
                 shift = float(config.get("kline", "shift"))
     trendBak = trend
+    toStopLoss = 0
     print(
         'current:%(current)s  ma%(ma2)s:%(ma)s diff:%(diff)s' % {'current': current,
                                                                  'ma2': ma2, 'ma': ma,
                                                                  'diff': round(diff, 2)})
     sys.stdout.flush()
     # adjust ma2
-    if symbol == "btc_cny" and ma2 == 30 and diff < -300:
-        ma2 = 15
-        print("##### diff too heigh adjust ma2 to 15 #####")
-        writeLog("##### diff too heigh adjust ma2 to 15 #####")
-    elif symbol == "btc_cny" and ma2 == 15 and diff > 150:
-        ma2 = 30
-        print("##### diff too heigh adjust ma2 to 30 #####")
-        writeLog("##### diff too heigh adjust ma2 to 30 #####")
+    if symbol == "btc_cny" and ma2 == int(config.get("kline", "cross").split("|")[1]) and diff < -300:
+        ma2 = int(config.get("kline", "cross").split("|")[1]) + 30
+        print("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
+        writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
+    elif symbol == "btc_cny" and ma2 == int(config.get("kline", "cross").split("|")[1]) + 30 and diff > 150:
+        ma2 = int(config.get("kline", "cross").split("|")[1])
+        print("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
+        writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
 
 
+def checkTransCount():
+    global ma2, transCountBak, transMode
+    config.read("config.ini")
+    transCount = int(config.get("trade", "transcount"))
+    if transCount - transCountBak >= 2:
+        if transMode == "plus":
+            ma2 += 10
+            if ma2 == (int(config.get("kline", "cross").split("|")[1]) + 30):
+                transMode = "minus"
+        else:
+            ma2 -= 10
+            if ma2 == int(config.get("kline", "cross").split("|")[1]):
+                transMode = "plus"
+    transCountBak = transCount
+
+
+timer = threading.Timer(90, checkTransCount)
+timer.start()
 
 showAccountInfo()
 while True:
