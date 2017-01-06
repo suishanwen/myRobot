@@ -15,7 +15,7 @@ config = configparser.ConfigParser()
 configBase.read("../key.ini")
 config.read("config.ini")
 
-# init apikey，secretkey,url
+# init apikey,secretkey,url
 apikey = configBase.get("okcoin", "apikey")
 secretkey = configBase.get("okcoin", "secretkey")
 okcoinRESTURL = 'www.okcoin.cn'
