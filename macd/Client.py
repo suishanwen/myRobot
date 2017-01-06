@@ -41,11 +41,7 @@ orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "avgPrice": 
 orderList = []
 trendBak = ""
 transCountBak = int(config.get("trade", "transcount"))
-buyAmount = 0
-buyCost = 0
-sellAmount = 0
-sellReward = 0
-transMode = "plus"
+transMode = "minus"
 toStopLoss = 0
 
 def setOrderInfo(type):
@@ -141,7 +137,7 @@ def cancelOrder(symbol, orderId):
 def addOrderList(order):
     global orderList
     orderList = list(filter(lambda orderIn: orderIn["order_id"] != order["order_id"], orderList))
-    if order["status"] == 1 or order["status"] == 2:
+    if order["deal_amount"] > 0:
         orderList.append(order)
 
 
@@ -253,7 +249,6 @@ def showAccountInfo():
 def calAvgReward(orderList):
     orderBuyList = list(filter(lambda orderIn: orderIn["type"] == 'buy', orderList))
     orderSellList = list(filter(lambda orderIn: orderIn["type"] == 'sell', orderList))
-    global buyAmount, buyCost, sellAmount, sellReward
     buyAmount = 0
     buyCost = 0
     sellAmount = 0
@@ -359,7 +354,7 @@ def currentVsMa():
                 writeLog("-----------------------------------------------------------------------")
             else:
                 toStopLoss += 1
-                if 0 < diff < 2:
+                if -shift < diff < 2 and toStopLoss < 5:
                     print("Return : toStopLoss:%(toStopLoss)s diff:%(diff)s" % {'toStopLoss': toStopLoss, 'diff': diff})
                     return
             orderProcess()
@@ -378,11 +373,11 @@ def currentVsMa():
                                                                  'diff': round(diff, 2)})
     sys.stdout.flush()
     # adjust ma2
-    if symbol == "btc_cny" and ma2 == int(config.get("kline", "cross").split("|")[1]) and diff < -300:
+    if symbol == "btc_cny" and ma2 == int(config.get("kline", "cross").split("|")[1]) and diff < -180:
         ma2 = int(config.get("kline", "cross").split("|")[1]) + 30
         print("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
         writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
-    elif symbol == "btc_cny" and ma2 == int(config.get("kline", "cross").split("|")[1]) + 30 and diff > 150:
+    elif symbol == "btc_cny" and ma2 == int(config.get("kline", "cross").split("|")[1]) + 30 and diff > 100:
         ma2 = int(config.get("kline", "cross").split("|")[1])
         print("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
         writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
@@ -393,22 +388,22 @@ def checkTransCount():
     config.read("config.ini")
     transCount = int(config.get("trade", "transcount"))
     if transCount - transCountBak >= 2:
-        if transMode == "plus":
-            ma2 += 10
-            if ma2 == (int(config.get("kline", "cross").split("|")[1]) + 30):
-                transMode = "minus"
-        else:
-            ma2 -= 10
-            if ma2 == int(config.get("kline", "cross").split("|")[1]):
+        if transMode == "minus":
+            ma2 -= 5
+            if ma2 <= (int(config.get("kline", "cross").split("|")[1]) - 15):
                 transMode = "plus"
+        else:
+            ma2 += 5
+            if ma2 >= int(config.get("kline", "cross").split("|")[1]):
+                transMode = "minus"
         print("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
         writeLog("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
     transCountBak = transCount
+    timer = threading.Timer(60, checkTransCount)
+    timer.start()
 
 
-timer = threading.Timer(90, checkTransCount)
-timer.start()
-
+checkTransCount()
 showAccountInfo()
 while True:
     strategy = maXVsMaX
