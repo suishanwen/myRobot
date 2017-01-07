@@ -42,7 +42,6 @@ orderList = []
 trendBak = ""
 transCountBak = int(config.get("trade", "transcount"))
 transMode = "minus"
-toStopLoss = 0
 
 def setOrderInfo(type):
     global orderInfo, symbol
@@ -337,7 +336,7 @@ def maXVsMaX():
 
 
 def currentVsMa():
-    global trendBak, orderInfo, shift, orderList, ma2, toStopLoss
+    global trendBak, orderInfo, shift, orderList, ma2,orderDiff
     current = round(getCoinPrice(symbol, "buy") - orderDiff, 2)
     ma = getMA(ma2)
     diff = current - ma
@@ -352,21 +351,15 @@ def currentVsMa():
             if trend == "buy":
                 orderList = []
                 writeLog("-----------------------------------------------------------------------")
-            else:
-                toStopLoss += 1
-                if -shift < diff < 2 and toStopLoss < 5:
-                    print("Return : toStopLoss:%(toStopLoss)s diff:%(diff)s" % {'toStopLoss': toStopLoss, 'diff': diff})
-                    return
             orderProcess()
             if orderInfo["dealAmount"] == 0:
                 trend = trendBak
                 writeLog("#orderCanceled")
             elif trend == "buy":
-                shift = float(config.get("kline", "shift")) / 2
+                shift = float(config.get("kline", "shift")) + orderDiff
             elif trend == "sell":
                 shift = float(config.get("kline", "shift"))
     trendBak = trend
-    toStopLoss = 0
     print(
         'current:%(current)s  ma%(ma2)s:%(ma)s diff:%(diff)s' % {'current': current,
                                                                  'ma2': ma2, 'ma': ma,
@@ -403,7 +396,7 @@ def checkTransCount():
     timer.start()
 
 
-checkTransCount()
+# checkTransCount()
 showAccountInfo()
 while True:
     strategy = maXVsMaX
