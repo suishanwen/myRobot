@@ -131,7 +131,7 @@ def cancelOrder(symbol, orderId):
     if result['result']:
         print(u"order", result['order_id'], "canceled")
     else:
-        print(u"order", orderId, "cancel failed！！！")
+        print(u"order", orderId, "not canceled or cancel failed！！！")
     status = checkOrderStatus(symbol, orderId)
     if status != -1 and status != 2:  # not canceled or cancel failed(part dealed) continue cancel
         cancelOrder(symbol, orderId)
@@ -347,6 +347,8 @@ def currentVsMa():
     diff = current - ma
     if diff > 2 * shift:
         shift += shift / 2
+    elif float(config.get("kline", "shift")) < diff < shift / 2:
+        shift -= shift / 2
     elif diff < 0:
         shift = float(config.get("kline", "shift"))
     if diff > shift:
@@ -365,14 +367,16 @@ def currentVsMa():
                 trend = trendBak
                 writeLog("#orderCanceled")
             elif trend == "buy":
-                shift = float(config.get("kline", "shift")) + orderDiff * 3
+                shift += orderDiff * 3
                 # elif trend == "sell":
                 # shift = float(config.get("kline", "shift"))
     trendBak = trend
     print(
-        'current:%(current)s  ma%(ma2)s:%(ma)s diff:%(diff)s' % {'current': current,
-                                                                 'ma2': ma2, 'ma': ma,
-                                                                 'diff': round(diff, 2)})
+        'current:%(current)s  ma%(ma2)s:%(ma)s diff:%(diff)s shift:%(shift)s %(p)s' % {'current': current,
+                                                                                       'ma2': ma2, 'ma': ma,
+                                                                                       'diff': round(diff, 2),
+                                                                                       'shift': round(shift, 2),
+                                                                                       'p': round(diff - shift, 2)})
     sys.stdout.flush()
     # adjust ma2
     if symbol == "btc_cny" and ma2 == int(config.get("kline", "cross").split("|")[1]) and diff < -180:
