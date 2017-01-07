@@ -356,7 +356,7 @@ def currentVsMa():
                 trend = trendBak
                 writeLog("#orderCanceled")
             elif trend == "buy":
-                shift = float(config.get("kline", "shift")) + orderDiff
+                shift = float(config.get("kline", "shift")) + orderDiff * 2
             elif trend == "sell":
                 shift = float(config.get("kline", "shift"))
     trendBak = trend
