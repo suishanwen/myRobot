@@ -16,9 +16,13 @@ configBase.read("../key.ini")
 config.read("config.ini")
 
 # init apikey,secretkey,url
+okcoinRESTURL = 'www.okcoin.cn'
 apikey = configBase.get("okcoin", "apikey")
 secretkey = configBase.get("okcoin", "secretkey")
-okcoinRESTURL = 'www.okcoin.cn'
+account = config.get("trade", "account")
+if account == "1":
+    apikey = configBase.get("okcoin1", "apikey")
+    secretkey = configBase.get("okcoin1", "secretkey")
 
 # currentAPI
 okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
@@ -42,6 +46,7 @@ orderList = []
 trendBak = ""
 transCountBak = int(config.get("trade", "transcount"))
 transMode = "minus"
+
 
 def setOrderInfo(type):
     global orderInfo, symbol
@@ -336,10 +341,14 @@ def maXVsMaX():
 
 
 def currentVsMa():
-    global trendBak, orderInfo, shift, orderList, ma2,orderDiff
+    global trendBak, orderInfo, shift, orderList, ma2, orderDiff
     current = round(getCoinPrice(symbol, "buy") - orderDiff, 2)
     ma = getMA(ma2)
     diff = current - ma
+    if diff > 2 * shift:
+        shift += shift / 2
+    elif diff < 0:
+        shift = float(config.get("kline", "shift"))
     if diff > shift:
         trend = "buy"
     else:
@@ -356,9 +365,9 @@ def currentVsMa():
                 trend = trendBak
                 writeLog("#orderCanceled")
             elif trend == "buy":
-                shift = float(config.get("kline", "shift")) + orderDiff * 2
-            elif trend == "sell":
-                shift = float(config.get("kline", "shift"))
+                shift = float(config.get("kline", "shift")) + orderDiff * 3
+                # elif trend == "sell":
+                # shift = float(config.get("kline", "shift"))
     trendBak = trend
     print(
         'current:%(current)s  ma%(ma2)s:%(ma)s diff:%(diff)s' % {'current': current,
