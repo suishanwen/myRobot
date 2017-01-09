@@ -48,6 +48,7 @@ orderList = []
 trendBak = ""
 transCountBak = int(config.get("trade", "transcount"))
 transMode = "minus"
+current = 0
 currentList = []
 
 
@@ -185,10 +186,15 @@ def checkOrderStatus(symbol, orderId, watiCount=0):
 
 
 def trade(type, amount):
-    global tradeWaitCount, symbol, orderInfo
-    price = getCoinPrice(symbol, type)
+    global tradeWaitCount, symbol, orderInfo, current, ma1, orderDiff
+    price = current
+    if ma1 != "current":
+        price = getCoinPrice(symbol, type)
     if type == "buy":
         amount = getBuyAmount(price, 4)
+        price += orderDiff
+    else:
+        price -= orderDiff
     if amount < 0.01:
         return 2
     orderId = makeOrder(symbol, type, price, amount)
@@ -344,7 +350,7 @@ def maXVsMaX():
 
 
 def currentVsMa():
-    global trendBak, orderInfo, shift, orderList, ma2, orderDiff
+    global trendBak, orderInfo, shift, orderList, ma2, orderDiff, current
     current = round(getCoinPrice(symbol, "buy") - orderDiff, 2)
     ma = getMA(ma2)
     diff = current - ma
@@ -393,11 +399,14 @@ def currentVsMa():
 
 
 def currentVsCurrent():
-    global trendBak, orderInfo, orderList, orderDiff, currentList
+    global trendBak, orderInfo, orderList, orderDiff, currentList, current
     current = round(getCoinPrice(symbol, "buy") - orderDiff, 2)
     currentList.insert(0, current)
-    if len(currentList) > 200:
+    if len(currentList) > 300:
         currentList.pop()
+    else:
+        print("waiting data:%(len)s" % {'len': len(currentList)})
+        return
     _avg = round(sum(currentList) / len(currentList), 2)
     _max = max(currentList)
     _min = min(currentList)
@@ -415,7 +424,7 @@ def currentVsCurrent():
         trend = "sell"
     elif dd > 0 and dy > _depth * 0.2:
         trend = "buy"
-    elif dd < 0 and dx > _depth * 0.2:
+    elif dd < 0 and dx < _depth * 0.2:
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         setOrderInfo(trend)
