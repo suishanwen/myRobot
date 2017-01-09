@@ -34,7 +34,9 @@ cross = config.get("kline", "cross")
 ma1 = cross.split("|")[0]
 if ma1 != "current":
     ma1 = int(ma1)
-ma2 = int(cross.split("|")[1])
+ma2 = cross.split("|")[1]
+if ma2 != "current":
+    ma2 = int(ma2)
 shift = float(config.get("kline", "shift"))
 transaction = float(config.get("trade", "transaction"))
 tradeWaitCount = int(config.get("trade", "tradeWaitCount"))
@@ -46,6 +48,7 @@ orderList = []
 trendBak = ""
 transCountBak = int(config.get("trade", "transcount"))
 transMode = "minus"
+currentList = []
 
 
 def setOrderInfo(type):
@@ -196,7 +199,7 @@ def trade(type, amount):
         dealAmountBak = orderInfo["dealAmount"]
         while watiCount < (tradeWaitCount + 1) and status != 2:
             status = checkOrderStatus(symbol, orderId, watiCount)
-            time.sleep(1)
+            time.sleep(0.5)
             watiCount += 1
             if watiCount == tradeWaitCount and status != 2:
                 if getCoinPrice(symbol, type) == orderInfo["price"]:
@@ -267,8 +270,8 @@ def calAvgReward(orderList):
     sellAvg = sellReward / sellAmount
     avgReward = round(sellAvg - buyAvg, 2)
     config.read("config.ini")
-    totalReward = round(float(config.get("trade", "avgreward")) + avgReward, 2)
-    config.set("trade", "avgreward", str(totalReward))
+    config.set("trade", "avgreward", str(round(float(config.get("trade", "avgreward")) + avgReward, 2)))
+    config.set("trade", "reward", str(round(float(config.get("trade", "reward")) + sellReward - buyCost, 2)))
     config.set("trade", "transcount", str(int(config.get("trade", "transcount")) + 1))
     fp = open("config.ini", "w")
     config.write(fp)
@@ -289,7 +292,7 @@ def orderProcess():
         if orderInfo["type"] == "sell":
             print(orderList)
             calAvgReward(orderList)
-        showAccountInfo()
+            # showAccountInfo()
     elif orderInfo["dealAmount"] != 0:
         orderProcess()
 
@@ -304,11 +307,11 @@ def getMA(param):
         ms -= param * 1 * 60 * 1000
     data = okcoinSpot.klines(symbol, type, param, ms)
     ma = 0
-    if len(data) != param:
-        raise Exception("waiting data...")
+    # if len(data) != param:
+    #     raise Exception("waiting data...")
     for line in data:
         ma += line[4]
-    return round(ma / param, 2)
+    return round(ma / len(data), 2)
 
 
 def maXVsMaX():
@@ -345,12 +348,12 @@ def currentVsMa():
     current = round(getCoinPrice(symbol, "buy") - orderDiff, 2)
     ma = getMA(ma2)
     diff = current - ma
-    if diff > 2 * shift:
-        shift += shift / 2
-    elif float(config.get("kline", "shift")) < diff < shift / 2:
-        shift -= shift / 2
-    elif diff < 0:
-        shift = float(config.get("kline", "shift"))
+    # if diff > 2 * shift:
+    #     shift += shift / 2
+    # elif float(config.get("kline", "shift")) < diff < shift / 2:
+    #     shift -= shift / 2
+    # elif diff < 0:
+    #     shift = float(config.get("kline", "shift"))
     if diff > shift:
         trend = "buy"
     else:
@@ -367,9 +370,9 @@ def currentVsMa():
                 trend = trendBak
                 writeLog("#orderCanceled")
             elif trend == "buy":
-                shift += orderDiff * 3
-                # elif trend == "sell":
-                # shift = float(config.get("kline", "shift"))
+                shift -= 100
+            elif trend == "sell":
+                shift = float(config.get("kline", "shift"))
     trendBak = trend
     print(
         'current:%(current)s  ma%(ma2)s:%(ma)s diff:%(diff)s shift:%(shift)s %(p)s' % {'current': current,
@@ -387,6 +390,46 @@ def currentVsMa():
         ma2 = int(config.get("kline", "cross").split("|")[1])
         print("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
         writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
+
+
+def currentVsCurrent():
+    global trendBak, orderInfo, orderList, orderDiff, currentList
+    current = round(getCoinPrice(symbol, "buy") - orderDiff, 2)
+    currentList.insert(0, current)
+    if len(currentList) > 200:
+        currentList.pop()
+    _avg = round(sum(currentList) / len(currentList), 2)
+    _max = max(currentList)
+    _min = min(currentList)
+    _depth = round(_max - _min, 2)
+    dd = _avg - current
+    dx = _max - current
+    dy = current - _min
+    print(
+        "current %(current)s  avg %(avg)s  max %(max)s  min %(min)s depth %(depth)s" % {'current': current, 'avg': _avg,
+                                                                                        'max': _max, 'min': _min,
+                                                                                        'depth': _depth})
+    # rcount = len(list(filter(lambda cu: cu > _avg, currentList)))
+    trend = trendBak
+    if dy == 0:
+        trend = "sell"
+    elif dd > 0 and dy > _depth * 0.2:
+        trend = "buy"
+    elif dd < 0 and dx > _depth * 0.2:
+        trend = "sell"
+    if trendBak != "" and trendBak != trend:
+        setOrderInfo(trend)
+        if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
+            if trend == "buy":
+                orderList = []
+                writeLog("-----------------------------------------------------------------------")
+            orderProcess()
+            if orderInfo["dealAmount"] == 0:
+                trend = trendBak
+                writeLog("#orderCanceled")
+    trendBak = trend
+    # print(min(currentList))
+    # print(max(currentList))
 
 
 def checkTransCount():
@@ -414,9 +457,12 @@ showAccountInfo()
 while True:
     strategy = maXVsMaX
     if ma1 == "current":
-        strategy = currentVsMa
+        if ma2 == "current":
+            strategy = currentVsCurrent
+        else:
+            strategy = currentVsMa
     try:
         strategy()
     except Exception as err:
         print(err)
-    time.sleep(1)
+    time.sleep(0.5)
