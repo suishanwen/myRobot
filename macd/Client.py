@@ -19,8 +19,8 @@ config.read("config.ini")
 okcoinRESTURL = 'www.okcoin.cn'
 apikey = configBase.get("okcoin", "apikey")
 secretkey = configBase.get("okcoin", "secretkey")
-account = config.get("trade", "account")
-if account == "1":
+user = config.get("account", "user")
+if user == "1":
     apikey = configBase.get("okcoin1", "apikey")
     secretkey = configBase.get("okcoin1", "secretkey")
 
@@ -28,16 +28,18 @@ if account == "1":
 okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
 
 # getConfig
-symbol = config.get("kline", "symbol")
-type = config.get("kline", "type")
-cross = config.get("kline", "cross")
+cross = config.get("strategy", "cross")
 ma1 = cross.split("|")[0]
 if ma1 != "current":
     ma1 = int(ma1)
 ma2 = cross.split("|")[1]
 if ma2 != "current":
     ma2 = int(ma2)
+
+symbol = config.get("kline", "symbol")
+type = config.get("kline", "type")
 shift = float(config.get("kline", "shift"))
+
 transaction = float(config.get("trade", "transaction"))
 tradeWaitCount = int(config.get("trade", "tradeWaitCount"))
 orderDiff = float(config.get("trade", "orderDiff"))
