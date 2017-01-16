@@ -3,13 +3,13 @@
 # encoding: utf-8
 
 import time
-import common.Client as common
+import common.OKClient as OKClient
 
 
 def brick():
     print("brick")
 
-common.showAccountInfo()
+OKClient.showAccountInfo()
 while True:
     try:
         brick()
