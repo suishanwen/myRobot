@@ -2,30 +2,12 @@
 # -*- coding: utf-8 -*-
 # encoding: utf-8
 
-import time, sys, configparser, importlib, threading
-
-sys.path.append("/home/python")
-importlib.reload(sys)
-from util.MyUtil import fromDict, fromTimeStamp, sendEmail
-from api.OkcoinSpotAPI import OKCoinSpot
+import time, sys, configparser, threading
+import common.Client as client
 
 # read config
-configBase = configparser.ConfigParser()
 config = configparser.ConfigParser()
-configBase.read("../key.ini")
 config.read("config.ini")
-
-# init apikey,secretkey,url
-okcoinRESTURL = 'www.okcoin.cn'
-apikey = configBase.get("okcoin", "apikey")
-secretkey = configBase.get("okcoin", "secretkey")
-user = config.get("account", "user")
-if user == "1":
-    apikey = configBase.get("okcoin1", "apikey")
-    secretkey = configBase.get("okcoin1", "secretkey")
-
-# currentAPI
-okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
 
 # getConfig
 cross = config.get("strategy", "cross")
@@ -36,234 +18,23 @@ ma2 = cross.split("|")[1]
 if ma2 != "current":
     ma2 = int(ma2)
 
-symbol = config.get("kline", "symbol")
 type = config.get("kline", "type")
 shift = float(config.get("kline", "shift"))
 
-transaction = float(config.get("trade", "transaction"))
-tradeWaitCount = int(config.get("trade", "tradeWaitCount"))
-orderDiff = float(config.get("trade", "orderDiff"))
-
 # global variable
-orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "avgPrice": 0, "dealAmount": 0, "transaction": 0}
-orderList = []
 trendBak = ""
 transCountBak = int(config.get("statis", "transcount"))
 transMode = "minus"
 current = 0
 currentList = []
+symbol = client.symbol
+orderInfo = client.orderInfo
+orderDiff = client.orderDiff
 
 
-def setOrderInfo(type):
-    global orderInfo, symbol
-    orderInfo['type'] = type
-    if type == "sell":
-        orderInfo['amount'] = getCoinNum(symbol)
-    else:
-        orderInfo['amount'] = 0
-    orderInfo['price'] = 0
-    orderInfo['dealAmount'] = 0
-    if orderInfo['amount'] > 0:
-        orderInfo['transaction'] = 0
-    else:
-        orderInfo['transaction'] = transaction
-
-
-def setPrice(price):
-    global orderInfo
-    orderInfo['price'] = price
-
-
-def setAvgPrice(avgPrice):
-    global orderInfo
-    orderInfo['avgPrice'] = avgPrice
-
-
-def setDealAmount(dealAmount):
-    global orderInfo
-    orderInfo['dealAmount'] = dealAmount
-
-
-def setTransaction(type):
-    global orderInfo
-    print(orderInfo)
-    if type == "plus":
-        orderInfo['transaction'] = round(orderInfo['transaction'] + orderInfo['dealAmount'] * orderInfo['avgPrice'], 2)
-    else:
-        orderInfo['transaction'] = round(orderInfo['transaction'] - orderInfo['dealAmount'] * orderInfo['avgPrice'], 2)
-
-
-def getBuyAmount(price, accuracy=2):
-    global orderInfo
-    return round(orderInfo['transaction'] / price, accuracy)
-
-
-def getUnhandledAmount():
-    global orderInfo
-    return round(float(orderInfo["amount"]) - float(orderInfo["dealAmount"]), 5)
-
-
-def getCoinNum(symbol):
-    myAccountInfo = okcoinSpot.userinfo()
-    if myAccountInfo["result"]:
-        free = fromDict(myAccountInfo, "info", "funds", "free")
-        if symbol == "btc_cny":
-            return float(free["btc"])
-        else:
-            return float(free["ltc"])
-    else:
-        print("getCoinNum Fail,Try again!")
-        getCoinNum(symbol)
-
-
-def makeOrder(symbol, type, price, amount):
-    print(
-        u'\n---------------------------------------------spot order--------------------------------------------------')
-    result = okcoinSpot.trade(symbol, type, price, amount)
-    if result['result']:
-        setPrice(price)
-        print("OrderId", result['order_id'], symbol, type, price, amount, "  ", fromTimeStamp(int(time.time())))
-        return result['order_id']
-    else:
-        print("order failed！", symbol, type, price, amount)
-        global orderInfo
-        print(orderInfo)
-        return "-1"
-
-
-def cancelOrder(symbol, orderId):
-    print(u'\n-----------------------------------------spot cancel order----------------------------------------------')
-    result = okcoinSpot.cancelOrder(symbol, orderId)
-    if result['result']:
-        print(u"order", result['order_id'], "canceled")
-    else:
-        print(u"order", orderId, "not canceled or cancel failed！！！")
-    status = checkOrderStatus(symbol, orderId)
-    if status != -1 and status != 2:  # not canceled or cancel failed(part dealed) continue cancel
-        cancelOrder(symbol, orderId)
-    return status
-
-
-def addOrderList(order):
-    global orderList
-    orderList = list(filter(lambda orderIn: orderIn["order_id"] != order["order_id"], orderList))
-    if order["deal_amount"] > 0:
-        orderList.append(order)
-
-
-def checkOrderStatus(symbol, orderId, watiCount=0):
-    orderResult = okcoinSpot.orderinfo(symbol, orderId)
-    if orderResult["result"]:
-        orders = orderResult["orders"]
-        if len(orders) > 0:
-            order = orders[0]
-            orderId = order["order_id"]
-            status = order["status"]
-            setDealAmount(order["deal_amount"])
-            setAvgPrice(order["avg_price"])
-            addOrderList(order)
-            if status == -1:
-                print("order", orderId, "canceled")
-            elif status == 0:
-                if watiCount == 30:
-                    print("timeout no deal")
-                else:
-                    print("no deal", end=" ")
-                    sys.stdout.flush()
-            elif status == 1:
-                global orderInfo
-                if watiCount == 30:
-                    print("part dealed ", orderInfo["dealAmount"])
-                else:
-                    print("part dealed ", orderInfo["dealAmount"], end=" ")
-                    sys.stdout.flush()
-            elif status == 2:
-                print("order", orderId, "complete deal")
-            elif status == 3:
-                print("order", orderId, "canceling")
-            return status
-    else:
-        print(orderId, " order not found")
-        return -2
-
-
-def trade(type, amount):
-    global tradeWaitCount, symbol, orderInfo, current, ma1, orderDiff
-    price = current
-    if ma1 != "current":
-        price = getCoinPrice(symbol, type)
-    if type == "buy":
-        amount = getBuyAmount(price, 4)
-        price += orderDiff
-    else:
-        price -= orderDiff
-    if amount < 0.01:
-        return 2
-    orderId = makeOrder(symbol, type, price, amount)
-    if orderId != "-1":
-        watiCount = 0
-        status = 0
-        global orderInfo
-        dealAmountBak = orderInfo["dealAmount"]
-        while watiCount < (tradeWaitCount + 1) and status != 2:
-            status = checkOrderStatus(symbol, orderId, watiCount)
-            time.sleep(0.5)
-            watiCount += 1
-            if watiCount == tradeWaitCount and status != 2:
-                if getCoinPrice(symbol, type) == orderInfo["price"]:
-                    watiCount -= int(tradeWaitCount / 3)
-        if status != 2:
-            status = cancelOrder(symbol, orderId)
-            setDealAmount(dealAmountBak + orderInfo["dealAmount"])
-        return status
-    else:
-        return -2
-
-
-def getCoinPrice(symbol, type):
-    if symbol == "btc_cny":
-        if type == "buy":
-            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["buy"]) + orderDiff, 2)
-        else:
-            return round(float(okcoinSpot.ticker('btc_cny')["ticker"]["sell"]) - orderDiff, 2)
-    else:
-        if type == "buy":
-            return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["buy"]) + orderDiff, 2)
-        else:
-            return round(float(okcoinSpot.ticker('ltc_cny')["ticker"]["sell"]) - orderDiff, 2)
-
-
-def writeLog(text=""):
-    global orderInfo
-    f = open(r'log.txt', 'a')
-    if text == "":
-        f.writelines(' '.join(
-            ["\n", orderInfo["symbol"], orderInfo["type"], str(orderInfo["price"]), str(orderInfo["avgPrice"]),
-             str(orderInfo["dealAmount"]),
-             str(round(orderInfo["avgPrice"] * orderInfo["dealAmount"], 2)), str(fromTimeStamp(int(time.time())))]))
-    else:
-        f.writelines("\n" + text)
-    f.close()
-
-
-def showAccountInfo():
-    print(u'---------------------------------------spot account info------------------------------------------------')
-    myAccountInfo = okcoinSpot.userinfo()
-    if myAccountInfo["result"]:
-        asset = fromDict(myAccountInfo, "info", "funds", "asset")
-        freezed = fromDict(myAccountInfo, "info", "funds", "freezed")
-        free = fromDict(myAccountInfo, "info", "funds", "free")
-        print(u"RMB", asset["total"], "available", free["cny"], "freezed", freezed["cny"])
-        print(u"BTC", free["btc"], "freezed", freezed["btc"])
-        print(u"LTC", free["ltc"], "freezed", freezed["ltc"])
-    else:
-        print("showAccountInfo Fail,Try again!")
-        showAccountInfo()
-
-
-def calAvgReward(orderList):
-    orderBuyList = list(filter(lambda orderIn: orderIn["type"] == 'buy', orderList))
-    orderSellList = list(filter(lambda orderIn: orderIn["type"] == 'sell', orderList))
+def calAvgReward():
+    orderBuyList = list(filter(lambda orderIn: orderIn["type"] == 'buy', client.orderList))
+    orderSellList = list(filter(lambda orderIn: orderIn["type"] == 'sell', client.orderList))
     buyAmount = 0
     buyCost = 0
     sellAmount = 0
@@ -283,24 +54,23 @@ def calAvgReward(orderList):
     config.set("statis", "transcount", str(int(config.get("statis", "transcount")) + 1))
     fp = open("config.ini", "w")
     config.write(fp)
-    writeLog(' '.join(
+    client.writeLog(' '.join(
         ["avgPriceDiff:", str(avgReward), "transactionReward:",
          str(round(sellReward - buyCost, 2))]))
 
 
 def orderProcess():
-    global orderInfo
-    amount = getUnhandledAmount()
-    status = trade(orderInfo["type"], amount)
+    global orderInfo, current
+    amount = client.getUnhandledAmount()
+    status = client.trade(orderInfo["type"], amount, current)
     # dealed or part dealed
     if status != -2:
-        setTransaction("minus")
-        writeLog()
+        client.setTransaction("minus")
+        client.writeLog()
     if status == 2:
         if orderInfo["type"] == "sell":
-            print(orderList)
-            calAvgReward(orderList)
-            # showAccountInfo()
+            print(client.orderList)
+            calAvgReward()
     elif orderInfo["dealAmount"] != 0:
         orderProcess()
 
@@ -313,7 +83,7 @@ def getMA(param):
         ms -= param * 5 * 60 * 1000
     elif type == "1min":
         ms -= param * 1 * 60 * 1000
-    data = okcoinSpot.klines(symbol, type, param, ms)
+    data = client.okcoinSpot.klines(symbol, type, param, ms)
     ma = 0
     # if len(data) != param:
     #     raise Exception("waiting data...")
@@ -323,7 +93,7 @@ def getMA(param):
 
 
 def maXVsMaX():
-    global trendBak, shift, orderList
+    global trendBak, shift
     maU = getMA(ma1)
     maL = getMA(ma2)
     diff = maU - maL
@@ -333,14 +103,14 @@ def maXVsMaX():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         # sendEmail("trend changed:" + str(maU) + " VS " + str(maL))
-        setOrderInfo(trend)
+        client.setOrderInfo(trend)
         if trend == "buy":
-            orderList = []
-            writeLog("-----------------------------------------------------------------------")
+            client.orderList = []
+            client.writeLog("-----------------------------------------------------------------------")
         orderProcess()
         if orderInfo["dealAmount"] == 0:
             trend = trendBak
-            writeLog("#orderCanceled")
+            client.writeLog("#orderCanceled")
         elif trend == "buy":
             shift = float(config.get("kline", "shift")) / 2
         elif trend == "sell":
@@ -352,8 +122,8 @@ def maXVsMaX():
 
 
 def currentVsMa():
-    global trendBak, orderInfo, shift, orderList, ma2, orderDiff, current
-    current = round(getCoinPrice(symbol, "buy") - orderDiff, 2)
+    global trendBak, orderInfo, shift, ma2, orderDiff, current
+    current = client.getCoinPrice(symbol, "buy")
     ma = getMA(ma2)
     diff = current - ma
     # if diff > 2 * shift:
@@ -368,17 +138,17 @@ def currentVsMa():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         # sendEmail("trend changed:" + trendBak + "->" + trend)
-        setOrderInfo(trend)
+        client.setOrderInfo(trend)
         if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
             if trend == "buy":
-                orderList = []
-                writeLog("-----------------------------------------------------------------------")
+                client.orderList = []
+                client.writeLog("-----------------------------------------------------------------------")
             orderProcess()
             if orderInfo["dealAmount"] == 0:
                 trend = trendBak
-                writeLog("#orderCanceled")
+                client.writeLog("#orderCanceled")
             elif trend == "buy":
-                shift -= orderDiff
+                shift += orderDiff
             elif trend == "sell":
                 shift = float(config.get("kline", "shift"))
     trendBak = trend
@@ -393,18 +163,18 @@ def currentVsMa():
     if symbol == "btc_cny" and ma2 == int(config.get("strategy", "cross").split("|")[1]) and diff < -180:
         ma2 = int(config.get("strategy", "cross").split("|")[1]) + 30
         print("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
-        writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
+        client.writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
     elif symbol == "btc_cny" and ma2 == int(config.get("strategy", "cross").split("|")[1]) + 30 and diff > 100:
         ma2 = int(config.get("strategy", "cross").split("|")[1])
         print("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
-        writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
+        client.writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
 
 
 def currentVsCurrent():
-    global trendBak, orderInfo, orderList, orderDiff, currentList, current
-    current = round(getCoinPrice(symbol, "buy") - orderDiff, 2)
+    global trendBak, orderInfo, orderDiff, currentList, current
+    current = client.getCoinPrice(symbol, "buy")
     currentList.insert(0, current)
-    if len(currentList) > 300:
+    if len(currentList) > 10:
         currentList.pop()
     else:
         print("waiting data:%(len)s" % {'len': len(currentList)})
@@ -429,15 +199,15 @@ def currentVsCurrent():
     elif dd < 0 and dx < _depth * 0.2:
         trend = "sell"
     if trendBak != "" and trendBak != trend:
-        setOrderInfo(trend)
+        client.setOrderInfo(trend)
         if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
             if trend == "buy":
-                orderList = []
-                writeLog("-----------------------------------------------------------------------")
+                client.orderList = []
+                client.writeLog("-----------------------------------------------------------------------")
             orderProcess()
             if orderInfo["dealAmount"] == 0:
                 trend = trendBak
-                writeLog("#orderCanceled")
+                client.writeLog("#orderCanceled")
     trendBak = trend
     # print(min(currentList))
     # print(max(currentList))
@@ -457,14 +227,14 @@ def checkTransCount():
             if ma2 >= int(config.get("strategy", "cross").split("|")[1]):
                 transMode = "minus"
         print("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
-        writeLog("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
+        client.writeLog("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
     transCountBak = transCount
     timer = threading.Timer(60, checkTransCount)
     timer.start()
 
 
 # checkTransCount()
-showAccountInfo()
+client.showAccountInfo()
 while True:
     strategy = maXVsMaX
     if ma1 == "current":
