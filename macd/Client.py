@@ -20,7 +20,7 @@ if ma2 != "current":
 
 type = config.get("kline", "type")
 shift = float(config.get("kline", "shift"))
-symbol = float(config.get("trade", "symbol"))
+symbol = config.get("trade", "symbol")
 transaction = float(config.get("trade", "transaction"))
 
 # global variable
