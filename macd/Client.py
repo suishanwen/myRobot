@@ -390,12 +390,12 @@ def currentVsMa():
                                                                                        'p': round(diff - shift, 2)})
     sys.stdout.flush()
     # adjust ma2
-    if symbol == "btc_cny" and ma2 == int(config.get("kline", "cross").split("|")[1]) and diff < -180:
-        ma2 = int(config.get("kline", "cross").split("|")[1]) + 30
+    if symbol == "btc_cny" and ma2 == int(config.get("strategy", "cross").split("|")[1]) and diff < -180:
+        ma2 = int(config.get("strategy", "cross").split("|")[1]) + 30
         print("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
         writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
-    elif symbol == "btc_cny" and ma2 == int(config.get("kline", "cross").split("|")[1]) + 30 and diff > 100:
-        ma2 = int(config.get("kline", "cross").split("|")[1])
+    elif symbol == "btc_cny" and ma2 == int(config.get("strategy", "cross").split("|")[1]) + 30 and diff > 100:
+        ma2 = int(config.get("strategy", "cross").split("|")[1])
         print("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
         writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
 
@@ -450,11 +450,11 @@ def checkTransCount():
     if transCount - transCountBak >= 2:
         if transMode == "minus":
             ma2 -= 5
-            if ma2 <= (int(config.get("kline", "cross").split("|")[1]) - 15):
+            if ma2 <= (int(config.get("strategy", "cross").split("|")[1]) - 15):
                 transMode = "plus"
         else:
             ma2 += 5
-            if ma2 >= int(config.get("kline", "cross").split("|")[1]):
+            if ma2 >= int(config.get("strategy", "cross").split("|")[1]):
                 transMode = "minus"
         print("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
         writeLog("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
