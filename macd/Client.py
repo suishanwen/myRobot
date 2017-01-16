@@ -48,7 +48,7 @@ orderDiff = float(config.get("trade", "orderDiff"))
 orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "avgPrice": 0, "dealAmount": 0, "transaction": 0}
 orderList = []
 trendBak = ""
-transCountBak = int(config.get("trade", "transcount"))
+transCountBak = int(config.get("statis", "transcount"))
 transMode = "minus"
 current = 0
 currentList = []
@@ -278,9 +278,9 @@ def calAvgReward(orderList):
     sellAvg = sellReward / sellAmount
     avgReward = round(sellAvg - buyAvg, 2)
     config.read("config.ini")
-    config.set("trade", "avgreward", str(round(float(config.get("trade", "avgreward")) + avgReward, 2)))
-    config.set("trade", "reward", str(round(float(config.get("trade", "reward")) + sellReward - buyCost, 2)))
-    config.set("trade", "transcount", str(int(config.get("trade", "transcount")) + 1))
+    config.set("statis", "avgreward", str(round(float(config.get("statis", "avgreward")) + avgReward, 2)))
+    config.set("statis", "reward", str(round(float(config.get("statis", "reward")) + sellReward - buyCost, 2)))
+    config.set("statis", "transcount", str(int(config.get("statis", "transcount")) + 1))
     fp = open("config.ini", "w")
     config.write(fp)
     writeLog(' '.join(
