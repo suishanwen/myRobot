@@ -20,6 +20,8 @@ if ma2 != "current":
 
 type = config.get("kline", "type")
 shift = float(config.get("kline", "shift"))
+symbol = float(config.get("trade", "symbol"))
+transaction = float(config.get("trade", "transaction"))
 
 # global variable
 trendBak = ""
@@ -27,7 +29,6 @@ transCountBak = int(config.get("statis", "transcount"))
 transMode = "minus"
 current = 0
 currentList = []
-symbol = OKClient.symbol
 orderInfo = OKClient.orderInfo
 orderDiff = OKClient.orderDiff
 
@@ -57,6 +58,14 @@ def calAvgReward():
     OKClient.writeLog(' '.join(
         ["avgPriceDiff:", str(avgReward), "transactionReward:",
          str(round(sellReward - buyCost, 2))]))
+
+
+def getAmount():
+    orderBuyList = list(filter(lambda orderIn: orderIn["type"] == 'buy', OKClient.orderList))
+    totalAmount = 0
+    for order in orderBuyList:
+        totalAmount += order["deal_amount"]
+    return totalAmount
 
 
 def orderProcess():
@@ -103,7 +112,7 @@ def maXVsMaX():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         # sendEmail("trend changed:" + str(maU) + " VS " + str(maL))
-        OKClient.setOrderInfo(symbol,trend)
+        OKClient.setOrderInfo(symbol, trend, getAmount(), transaction)
         if trend == "buy":
             OKClient.orderList = []
             OKClient.writeLog("-----------------------------------------------------------------------")
@@ -141,7 +150,7 @@ def currentVsMa():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         # sendEmail("trend changed:" + trendBak + "->" + trend)
-        OKClient.setOrderInfo(symbol,trend)
+        OKClient.setOrderInfo(symbol, trend, getAmount(), transaction)
         if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
             if trend == "buy":
                 OKClient.orderList = []
@@ -202,7 +211,7 @@ def currentVsCurrent():
     elif dd < 0 and dx < _depth * 0.2:
         trend = "sell"
     if trendBak != "" and trendBak != trend:
-        OKClient.setOrderInfo(symbol,trend)
+        OKClient.setOrderInfo(symbol, trend, getAmount(), transaction)
         if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
             if trend == "buy":
                 OKClient.orderList = []

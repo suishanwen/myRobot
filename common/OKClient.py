@@ -27,7 +27,6 @@ if user == "1":
 okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
 
 # getConfig
-transaction = float(config0.get("trade", "transaction"))
 tradeWaitCount = int(config0.get("trade", "tradeWaitCount"))
 orderDiff = float(config0.get("trade", "orderDiff"))
 
@@ -36,19 +35,16 @@ orderInfo = {"symbol": "", "type": "", "price": 0, "amount": 0, "avgPrice": 0, "
 orderList = []
 
 
-def setOrderInfo(symbol,type):
+def setOrderInfo(symbol, type, amount=0, transaction=0):
     global orderInfo
     orderInfo['symbol'] = symbol
     orderInfo['type'] = type
-    if type == "sell":
-        orderInfo['amount'] = getCoinNum(symbol)
-    else:
-        orderInfo['amount'] = 0
+    orderInfo['amount'] = amount
     orderInfo['price'] = 0
     orderInfo['dealAmount'] = 0
-    if orderInfo['amount'] > 0:
+    if amount > 0:
         orderInfo['transaction'] = 0
-    else:
+    elif transaction != 0:
         orderInfo['transaction'] = transaction
 
 

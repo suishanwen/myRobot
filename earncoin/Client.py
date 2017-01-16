@@ -19,18 +19,6 @@ btcPerAmount = 0.01
 orderInfo = OKClient.orderInfo
 orderdiff = OKClient.orderDiff
 
-
-def setOrderInfo(symbol, type, amount=0):
-    global orderInfo
-    orderInfo['symbol'] = symbol
-    orderInfo['type'] = type
-    orderInfo['amount'] = amount
-    orderInfo['price'] = 0
-    orderInfo['dealAmount'] = 0
-    if amount > 0:
-        orderInfo['transaction'] = 0
-
-
 def resetBaseRate(shift):
     global baseRate
     baseRate += shift
@@ -45,7 +33,7 @@ def watchBuyInfo():
     ltc = OKClient.okcoinSpot.ticker('ltc_cny')
     btcTicker = btc["ticker"]
     ltcTicker = ltc["ticker"]
-    rate = round(float(ltcTicker["buy"]) / float(btcTicker["buy"]), 6)
+    rate = round(float(ltcTicker["buy"]) / float(btcTicker["buy"]),6)
     if rate <= baseRate - shiftRate:
         num = getCoinNum("btc_cny")
         if num >= btcPerAmount:
@@ -54,7 +42,7 @@ def watchBuyInfo():
             print(u"BTC", btcTicker["buy"], "LTC", ltcTicker["buy"], "比", rate, "    ", fromTimeStamp(btc["date"]))
             print("进入btcToLtc流程...")
             OKClient.writeLog(u"\nEnter btcToLtc process... baseRate:" + str(baseRate) + " rate:" + str(rate))
-            setOrderInfo("btc_cny", "sell", btcPerAmount)
+            OKClient.setOrderInfo("btc_cny", "sell", btcPerAmount)
             btcToLtc(float(btcTicker["buy"]) - orderdiff)
     elif rate >= baseRate + shiftRate:
         num = getCoinNum("ltc_cny")
@@ -64,7 +52,7 @@ def watchBuyInfo():
             print(u"BTC", btcTicker["buy"], "LTC", ltcTicker["buy"], "比", rate, "    ", fromTimeStamp(btc["date"]))
             print("进入ltcToBtc流程...")
             OKClient.writeLog(u"\nEnter ltcToBtc process... baseRate:" + str(baseRate) + " rate:" + str(rate))
-            setOrderInfo("ltc_cny", "sell", round(btcPerAmount / (baseRate + shiftRate), 2))
+            OKClient.setOrderInfo("ltc_cny", "sell", round(btcPerAmount / (baseRate + shiftRate), 2))
             ltcToBtc(float(ltcTicker["buy"]) + orderdiff)
 
 
@@ -74,7 +62,7 @@ def btcToLtc(price=0):
     OKClient.setTransaction("plus")
     OKClient.writeLog()
     if status == 2:
-        setOrderInfo("ltc_cny", "buy")
+        OKClient.setOrderInfo("ltc_cny", "buy")
         ltcFun()
     elif status == 1:
         btcToLtc()
@@ -103,7 +91,7 @@ def ltcToBtc(price=0):
     OKClient.setTransaction("plus")
     OKClient.writeLog()
     if status == 2:
-        setOrderInfo("btc_cny", "buy")
+        OKClient.setOrderInfo("btc_cny", "buy")
         btcFun()
     elif status == 1:
         btcToLtc()
