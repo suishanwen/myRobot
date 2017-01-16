@@ -3,7 +3,7 @@
 # encoding: utf-8
 
 import time, sys, configparser, threading
-import common.Client as client
+import common.Client as Client
 
 # read config
 config = configparser.ConfigParser()
@@ -27,14 +27,14 @@ transCountBak = int(config.get("statis", "transcount"))
 transMode = "minus"
 current = 0
 currentList = []
-symbol = client.symbol
-orderInfo = client.orderInfo
-orderDiff = client.orderDiff
+symbol = Client.symbol
+orderInfo = Client.orderInfo
+orderDiff = Client.orderDiff
 
 
 def calAvgReward():
-    orderBuyList = list(filter(lambda orderIn: orderIn["type"] == 'buy', client.orderList))
-    orderSellList = list(filter(lambda orderIn: orderIn["type"] == 'sell', client.orderList))
+    orderBuyList = list(filter(lambda orderIn: orderIn["type"] == 'buy', Client.orderList))
+    orderSellList = list(filter(lambda orderIn: orderIn["type"] == 'sell', Client.orderList))
     buyAmount = 0
     buyCost = 0
     sellAmount = 0
@@ -54,22 +54,22 @@ def calAvgReward():
     config.set("statis", "transcount", str(int(config.get("statis", "transcount")) + 1))
     fp = open("config.ini", "w")
     config.write(fp)
-    client.writeLog(' '.join(
+    Client.writeLog(' '.join(
         ["avgPriceDiff:", str(avgReward), "transactionReward:",
          str(round(sellReward - buyCost, 2))]))
 
 
 def orderProcess():
     global orderInfo, current
-    amount = client.getUnhandledAmount()
-    status = client.trade(orderInfo["type"], amount, current)
+    amount = Client.getUnhandledAmount()
+    status = Client.trade(orderInfo["type"], amount, current)
     # dealed or part dealed
     if status != -2:
-        client.setTransaction("minus")
-        client.writeLog()
+        Client.setTransaction("minus")
+        Client.writeLog()
     if status == 2:
         if orderInfo["type"] == "sell":
-            print(client.orderList)
+            print(Client.orderList)
             calAvgReward()
     elif orderInfo["dealAmount"] != 0:
         orderProcess()
@@ -83,7 +83,7 @@ def getMA(param):
         ms -= param * 5 * 60 * 1000
     elif type == "1min":
         ms -= param * 1 * 60 * 1000
-    data = client.okcoinSpot.klines(symbol, type, param, ms)
+    data = Client.okcoinSpot.klines(symbol, type, param, ms)
     ma = 0
     # if len(data) != param:
     #     raise Exception("waiting data...")
@@ -103,14 +103,14 @@ def maXVsMaX():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         # sendEmail("trend changed:" + str(maU) + " VS " + str(maL))
-        client.setOrderInfo(trend)
+        Client.setOrderInfo(trend)
         if trend == "buy":
-            client.orderList = []
-            client.writeLog("-----------------------------------------------------------------------")
+            Client.orderList = []
+            Client.writeLog("-----------------------------------------------------------------------")
         orderProcess()
         if orderInfo["dealAmount"] == 0:
             trend = trendBak
-            client.writeLog("#orderCanceled")
+            Client.writeLog("#orderCanceled")
         elif trend == "buy":
             shift = float(config.get("kline", "shift")) / 2
         elif trend == "sell":
@@ -123,7 +123,7 @@ def maXVsMaX():
 
 def currentVsMa():
     global trendBak, orderInfo, shift, ma2, orderDiff, current
-    current = client.getCoinPrice(symbol, "buy")
+    current = Client.getCoinPrice(symbol, "buy")
     ma = getMA(ma2)
     diff = current - ma
     # if diff > 2 * shift:
@@ -138,15 +138,15 @@ def currentVsMa():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         # sendEmail("trend changed:" + trendBak + "->" + trend)
-        client.setOrderInfo(trend)
+        Client.setOrderInfo(trend)
         if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
             if trend == "buy":
-                client.orderList = []
-                client.writeLog("-----------------------------------------------------------------------")
+                Client.orderList = []
+                Client.writeLog("-----------------------------------------------------------------------")
             orderProcess()
             if orderInfo["dealAmount"] == 0:
                 trend = trendBak
-                client.writeLog("#orderCanceled")
+                Client.writeLog("#orderCanceled")
             elif trend == "buy":
                 shift += orderDiff
             elif trend == "sell":
@@ -163,16 +163,16 @@ def currentVsMa():
     if symbol == "btc_cny" and ma2 == int(config.get("strategy", "cross").split("|")[1]) and diff < -180:
         ma2 = int(config.get("strategy", "cross").split("|")[1]) + 30
         print("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
-        client.writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
+        Client.writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
     elif symbol == "btc_cny" and ma2 == int(config.get("strategy", "cross").split("|")[1]) + 30 and diff > 100:
         ma2 = int(config.get("strategy", "cross").split("|")[1])
         print("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
-        client.writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
+        Client.writeLog("##### diff too heigh , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
 
 
 def currentVsCurrent():
     global trendBak, orderInfo, orderDiff, currentList, current
-    current = client.getCoinPrice(symbol, "buy")
+    current = Client.getCoinPrice(symbol, "buy")
     currentList.insert(0, current)
     if len(currentList) > 10:
         currentList.pop()
@@ -199,15 +199,15 @@ def currentVsCurrent():
     elif dd < 0 and dx < _depth * 0.2:
         trend = "sell"
     if trendBak != "" and trendBak != trend:
-        client.setOrderInfo(trend)
+        Client.setOrderInfo(trend)
         if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
             if trend == "buy":
-                client.orderList = []
-                client.writeLog("-----------------------------------------------------------------------")
+                Client.orderList = []
+                Client.writeLog("-----------------------------------------------------------------------")
             orderProcess()
             if orderInfo["dealAmount"] == 0:
                 trend = trendBak
-                client.writeLog("#orderCanceled")
+                Client.writeLog("#orderCanceled")
     trendBak = trend
     # print(min(currentList))
     # print(max(currentList))
@@ -227,14 +227,14 @@ def checkTransCount():
             if ma2 >= int(config.get("strategy", "cross").split("|")[1]):
                 transMode = "minus"
         print("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
-        client.writeLog("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
+        Client.writeLog("##### trans too many , adjust ma2 to %(ma2)s #####" % {'ma2': ma2})
     transCountBak = transCount
     timer = threading.Timer(60, checkTransCount)
     timer.start()
 
 
 # checkTransCount()
-client.showAccountInfo()
+Client.showAccountInfo()
 while True:
     strategy = maXVsMaX
     if ma1 == "current":
