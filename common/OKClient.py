@@ -30,15 +30,15 @@ okcoinSpot = OKCoinSpot(okcoinRESTURL, apikey, secretkey)
 transaction = float(config0.get("trade", "transaction"))
 tradeWaitCount = int(config0.get("trade", "tradeWaitCount"))
 orderDiff = float(config0.get("trade", "orderDiff"))
-symbol = config0.get("trade", "symbol")
 
 # global variable
-orderInfo = {"symbol": symbol, "type": "", "price": 0, "amount": 0, "avgPrice": 0, "dealAmount": 0, "transaction": 0}
+orderInfo = {"symbol": "", "type": "", "price": 0, "amount": 0, "avgPrice": 0, "dealAmount": 0, "transaction": 0}
 orderList = []
 
 
-def setOrderInfo(type):
-    global orderInfo, symbol
+def setOrderInfo(symbol,type):
+    global orderInfo
+    orderInfo['symbol'] = symbol
     orderInfo['type'] = type
     if type == "sell":
         orderInfo['amount'] = getCoinNum(symbol)
@@ -135,6 +135,7 @@ def addOrderList(order):
 
 
 def checkOrderStatus(symbol, orderId, watiCount=0):
+    global tradeWaitCount
     orderResult = okcoinSpot.orderinfo(symbol, orderId)
     if orderResult["result"]:
         orders = orderResult["orders"]
@@ -148,14 +149,14 @@ def checkOrderStatus(symbol, orderId, watiCount=0):
             if status == -1:
                 print("order", orderId, "canceled")
             elif status == 0:
-                if watiCount == 30:
+                if watiCount == tradeWaitCount:
                     print("timeout no deal")
                 else:
                     print("no deal", end=" ")
                     sys.stdout.flush()
             elif status == 1:
                 global orderInfo
-                if watiCount == 30:
+                if watiCount == tradeWaitCount:
                     print("part dealed ", orderInfo["dealAmount"])
                 else:
                     print("part dealed ", orderInfo["dealAmount"], end=" ")
@@ -170,8 +171,8 @@ def checkOrderStatus(symbol, orderId, watiCount=0):
         return -2
 
 
-def trade(type, amount, price=0):
-    global tradeWaitCount, symbol, orderInfo, orderDiff
+def trade(symbol, type, amount, price=0):
+    global tradeWaitCount, orderInfo, orderDiff
     if price == 0:
         price = getTradePrice(symbol, type)
     if type == "buy":
@@ -190,7 +191,7 @@ def trade(type, amount, price=0):
             watiCount += 1
             if watiCount == tradeWaitCount and status != 2:
                 if getTradePrice(symbol, type) == orderInfo["price"]:
-                    watiCount -= int(tradeWaitCount / 3)
+                    watiCount -= 1
         if status != 2:
             status = cancelOrder(symbol, orderId)
             setDealAmount(dealAmountBak + orderInfo["dealAmount"])
@@ -251,19 +252,3 @@ def showAccountInfo():
     else:
         print("showAccountInfo Fail,Try again!")
         showAccountInfo()
-
-
-def orderProcess():
-    global orderInfo
-    amount = getUnhandledAmount()
-    status = trade(orderInfo["type"], amount)
-    # dealed or part dealed
-    if status != -2:
-        setTransaction("minus")
-        writeLog()
-    if status == 2:
-        if orderInfo["type"] == "sell":
-            print(orderList)
-            # showAccountInfo()
-    elif orderInfo["dealAmount"] != 0:
-        orderProcess()

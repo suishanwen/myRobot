@@ -60,9 +60,9 @@ def calAvgReward():
 
 
 def orderProcess():
-    global orderInfo, current
+    global orderInfo, current, symbol
     amount = OKClient.getUnhandledAmount()
-    status = OKClient.trade(orderInfo["type"], amount, current)
+    status = OKClient.trade(symbol, orderInfo["type"], amount, current)
     # dealed or part dealed
     if status != -2:
         OKClient.setTransaction("minus")
@@ -103,7 +103,7 @@ def maXVsMaX():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         # sendEmail("trend changed:" + str(maU) + " VS " + str(maL))
-        OKClient.setOrderInfo(trend)
+        OKClient.setOrderInfo(symbol,trend)
         if trend == "buy":
             OKClient.orderList = []
             OKClient.writeLog("-----------------------------------------------------------------------")
@@ -141,7 +141,7 @@ def currentVsMa():
         trend = "sell"
     if trendBak != "" and trendBak != trend:
         # sendEmail("trend changed:" + trendBak + "->" + trend)
-        OKClient.setOrderInfo(trend)
+        OKClient.setOrderInfo(symbol,trend)
         if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
             if trend == "buy":
                 OKClient.orderList = []
@@ -202,7 +202,7 @@ def currentVsCurrent():
     elif dd < 0 and dx < _depth * 0.2:
         trend = "sell"
     if trendBak != "" and trendBak != trend:
-        OKClient.setOrderInfo(trend)
+        OKClient.setOrderInfo(symbol,trend)
         if trend == "buy" or trend == "sell" and orderInfo["amount"] >= 0.01:
             if trend == "buy":
                 OKClient.orderList = []

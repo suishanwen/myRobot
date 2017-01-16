@@ -157,3 +157,9 @@ Enter btcToLtc process... baseRate:0.00847 rate:0.008448
 Enter ltcToBtc process... baseRate:0.00845 rate:0.008471
  ltc_cny sell 32.86 118.06 3879.45 2016-06-11 16:42:39
  btc_cny buy 3878.5 1 0.95 2016-06-11 16:42:42
+
+Enter btcToLtc process... baseRate:0.0047 rate:0.004681
+
+Enter btcToLtc process... baseRate:0.0047 rate:0.00468
+ btc_cny sell 5660.79 5661.06 0.01 56.61 2017-01-16 19:12:12
+ ltc_cny buy 26.5 26.5 2.136 56.6 2017-01-16 19:12:13
