@@ -116,8 +116,11 @@ def maXVsMaX():
         elif trend == "sell":
             shift = float(config.get("kline", "shift"))
     trendBak = trend
-    print('ma%(ma1)s:%(maU)s  ma%(ma2)s:%(maL)s diff:%(diff)s' % {'ma1': ma1, 'maU': maU, 'ma2': ma2, 'maL': maL,
-                                                                  'diff': round(diff, 2)})
+    print('ma%(ma1)s:%(maU)s  ma%(ma2)s:%(maL)s diff:%(diff)s shift:%(shift)s p:%(p)s' % {'ma1': ma1, 'maU': maU,
+                                                                                          'ma2': ma2, 'maL': maL,
+                                                                                          'diff': round(diff, 2),
+                                                                                          'shift': round(shift, 2),
+                                                                                          'p': round(diff - shift, 2)})
     sys.stdout.flush()
 
 
