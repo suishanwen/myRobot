@@ -3,12 +3,14 @@
 # encoding: utf-8
 # 客户端调用，用于查看API返回结果
 
-import configparser
-import time
+
+import sys, importlib
+sys.path.append("/home/python")
+importlib.reload(sys)
 
 from util.MyUtil import fromDict, fromTimeStamp, sendEmail
 import common.OKClient as OKClient
-
+import configparser,time
 # 读取比率配置
 config = configparser.ConfigParser()
 config.read("config.ini")

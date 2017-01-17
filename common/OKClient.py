@@ -2,10 +2,7 @@
 # -*- coding: utf-8 -*-
 # encoding: utf-8
 
-import time, sys, configparser, importlib
-
-sys.path.append("/home/python")
-importlib.reload(sys)
+import time, sys, configparser
 from util.MyUtil import fromDict, fromTimeStamp, sendEmail
 from api.OkcoinSpotAPI import OKCoinSpot
 

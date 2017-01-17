@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # encoding: utf-8
+import sys, importlib
+sys.path.append("/home/python")
+importlib.reload(sys)
 
 import time
 import common.OKClient as OKClient
