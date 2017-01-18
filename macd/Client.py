@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # encoding: utf-8
 import sys, importlib
+
 sys.path.append("/home/python")
 importlib.reload(sys)
 
@@ -34,9 +35,11 @@ current = 0
 currentList = []
 orderInfo = OKClient.orderInfo
 orderDiff = OKClient.orderDiff
+tradeRemain = 0
 
 
 def calAvgReward():
+    global tradeRemain
     orderBuyList = list(filter(lambda orderIn: orderIn["type"] == 'buy', OKClient.orderList))
     orderSellList = list(filter(lambda orderIn: orderIn["type"] == 'sell', OKClient.orderList))
     buyAmount = 0
@@ -50,6 +53,7 @@ def calAvgReward():
     for order in orderSellList:
         sellAmount += order["deal_amount"]
         sellReward += order["deal_amount"] * order["avg_price"]
+    tradeRemain = buyAmount - sellAmount
     sellAvg = sellReward / sellAmount
     avgReward = round(sellAvg - buyAvg, 2)
     config.read("config.ini")
@@ -68,6 +72,8 @@ def getAmount():
     totalAmount = 0
     for order in orderBuyList:
         totalAmount += order["deal_amount"]
+    if totalAmount != 0:
+        totalAmount += tradeRemain
     return totalAmount
 
 
@@ -124,7 +130,7 @@ def maXVsMaX():
             trend = trendBak
             OKClient.writeLog("#orderCanceled")
         elif trend == "buy":
-            shift = float(config.get("kline", "shift")) / 2
+            shift += orderDiff
         elif trend == "sell":
             shift = float(config.get("kline", "shift"))
     trendBak = trend
