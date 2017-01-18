@@ -20,7 +20,7 @@ def brick():
 # BTCCClient.getCoinNum("btc_cny")
 orderId=BTCCClient.makeOrder("btccny","buy",100,1)
 print(orderId)
-BTCCClient.cancelOrder("btccny",1103822078)
+BTCCClient.cancelOrder("btccny",orderId)
 
 # while True:
 #     try:
