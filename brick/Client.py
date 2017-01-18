@@ -14,7 +14,14 @@ def brick():
     print("brick")
 
 # OKClient.showAccountInfo()
-BTCCClient.showAccountInfo()
+# BTCCClient.showAccountInfo()
+# BTCCClient.getCoinPrice("btc_cny","buy")
+# BTCCClient.getTradePrice("btc_cny","buy")
+# BTCCClient.getCoinNum("btc_cny")
+orderId=BTCCClient.makeOrder("btccny","buy",100,1)
+print(orderId)
+BTCCClient.cancelOrder("btccny",1103822078)
+
 # while True:
 #     try:
 #         brick()

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # encoding: utf-8
 import api.BTCCAPI as btcchina
-from util.MyUtil import fromDict, fromTimeStamp, sendEmail
+from util.MyUtil import fromDict, fromTimeStamp, sendEmail, hasattr
 import time, sys, configparser
 
 # read config
@@ -73,16 +73,157 @@ def getUnhandledAmount():
 
 def getCoinNum(symbol):
     myAccountInfo = bc.get_account_info()
-    print(myAccountInfo)
-    if myAccountInfo["result"]:
-        free = fromDict(myAccountInfo, "info", "funds", "free")
-        if symbol == "btc_cny":
-            return float(free["btc"])
+    if hasattr(myAccountInfo, "profile"):
+        balance = fromDict(myAccountInfo, "balance")
+        if symbol == "btccny":
+            return float(balance["btc"]["amount"])
         else:
-            return float(free["ltc"])
+            return float(balance["ltc"]["amount"])
     else:
         print("getCoinNum Fail,Try again!")
         getCoinNum(symbol)
+
+
+def getCoinPrice(symbol, type):
+    if symbol == "btccny":
+        result = bc.get_market_depth2()
+        if hasattr(result, "market_depth"):
+            bid = result["market_depth"]["bid"]
+            ask = result["market_depth"]["ask"]
+            if type == "buy":
+                return round(float(bid[0]["price"]), 2)
+            else:
+                return round(float(ask[0]["price"]), 2)
+        else:
+            getCoinPrice(symbol, type)
+
+
+def getTradePrice(symbol, type):
+    if symbol == "btccny":
+        result = bc.get_market_depth2()
+        if hasattr(result, "market_depth"):
+            bid = result["market_depth"]["bid"]
+            ask = result["market_depth"]["ask"]
+            if type == "buy":
+                return round(float(bid[0]["price"]) + orderDiff, 2)
+            else:
+                return round(float(ask[0]["price"]) - orderDiff, 2)
+        else:
+            getTradePrice(symbol, type)
+
+
+def makeOrder(symbol, type, price, amount):
+    print(
+        u'\n---------------------------------------------spot order--------------------------------------------------')
+    result = bc.trade(price, amount, type, symbol)
+    if isinstance(result,int):
+        setPrice(price)
+        print("OrderId", result, symbol, type, price, amount, "  ", fromTimeStamp(int(time.time())))
+        return result
+    else:
+        print("order failed！", symbol, type, price, amount)
+        global orderInfo
+        print(orderInfo)
+        return "-1"
+
+
+def cancelOrder(symbol, orderId):
+    print(u'\n-----------------------------------------spot cancel order----------------------------------------------')
+    result = bc.cancel(orderId, symbol)
+    if result:
+        print(u"order", str(orderId), "canceled")
+    else:
+        print(u"order", orderId, "not canceled or cancel failed！！！")
+    status = checkOrderStatus(symbol, orderId)
+    if status != "closed" and status != "cancelled":  # not canceled or cancel failed(part dealed) continue cancel
+        cancelOrder(symbol, orderId)
+    return status
+
+
+def addOrderList(order):
+    global orderList
+    orderList = list(filter(lambda orderIn: orderIn["order_id"] != order["order_id"], orderList))
+    if float(order["amount_original"])-float(order["amount"]) > 0:
+        orderList.append(order)
+
+
+def checkOrderStatus(symbol, orderId, watiCount=0):
+    global tradeWaitCount
+    orderResult = bc.get_orders(orderId,symbol)
+    print(orderResult)
+    if hasattr(orderResult,"order"):
+        order = orderResult["order"]
+        if hasattr(order,"id"):
+            orderId = order["id"]
+            status = order["status"]
+            setDealAmount(round(float(order["amount_original"])-float(order["amount"]),2))
+            setAvgPrice(order["avg_price"])
+            addOrderList(order)
+            if status == "cancelled":
+                print("order", orderId, "canceled")
+            elif status == 0:
+                if watiCount == tradeWaitCount:
+                    print("timeout no deal")
+                else:
+                    print("no deal", end=" ")
+                    sys.stdout.flush()
+            elif status == "open":
+                global orderInfo
+                if watiCount == tradeWaitCount:
+                    print(orderInfo["dealAmount"], "dealed ")
+                else:
+                    print(orderInfo["dealAmount"],"dealed " , end=" ")
+                    sys.stdout.flush()
+            elif status == "closed":
+                print("order", orderId, "complete deal")
+            elif status == "pending ":
+                print("order", orderId, "canceling")
+            return status
+    else:
+        print(orderId, " order not found")
+        return "error"
+
+
+def trade(symbol, type, amount, price=0):
+    global tradeWaitCount, orderInfo, orderDiff
+    if price == 0:
+        price = getTradePrice(symbol, type)
+    if type == "buy":
+        amount = getBuyAmount(price, 4)
+    if amount < 0.01:
+        return 2
+    orderId = makeOrder(symbol, type, price, amount)
+    if orderId != "-1":
+        watiCount = 0
+        status = 0
+        global orderInfo
+        dealAmountBak = orderInfo["dealAmount"]
+        while watiCount < (tradeWaitCount + 1) and status != "closed":
+            status = checkOrderStatus(symbol, orderId, watiCount)
+            time.sleep(0.5)
+            watiCount += 1
+            if watiCount == tradeWaitCount and status != "closed":
+                if getTradePrice(symbol, type) == orderInfo["price"]:
+                    watiCount -= 1
+        if status != "closed":
+            status = cancelOrder(symbol, orderId)
+            setDealAmount(dealAmountBak + orderInfo["dealAmount"])
+        return status
+    else:
+        return "error"
+
+
+def writeLog(text=""):
+    global orderInfo
+    f = open(r'log.txt', 'a')
+    if text == "":
+        f.writelines(' '.join(
+            ["\n", orderInfo["symbol"], orderInfo["type"], str(orderInfo["price"]), str(orderInfo["avgPrice"]),
+             str(orderInfo["dealAmount"]),
+             str(round(orderInfo["avgPrice"] * orderInfo["dealAmount"], 2)), str(fromTimeStamp(int(time.time())))]))
+    else:
+        f.writelines("\n" + text)
+    f.close()
 
 
 def showAccountInfo():
@@ -119,7 +260,7 @@ def showAccountInfo():
     print(u'---------------------------------------spot account info------------------------------------------------')
     myAccountInfo = bc.get_account_info()
     print(myAccountInfo)
-    if myAccountInfo["profile"]:
+    if hasattr(myAccountInfo, "profile"):
         balance = fromDict(myAccountInfo, "balance")
         frozen = fromDict(myAccountInfo, "frozen")
         print(u"RMB", round(float(frozen["cny"]["amount"]) + float(balance["cny"]["amount"]), 2), "available",

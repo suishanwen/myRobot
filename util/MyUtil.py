@@ -3,6 +3,11 @@ import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
 
+
+def hasattr(dict, args):
+    return args in dict.keys()
+
+
 def fromDict(dict, *args):
     for a in args:
         dict = dict[a]
@@ -11,6 +16,7 @@ def fromDict(dict, *args):
 
 def fromTimeStamp(timeStamp):
     return datetime.datetime.fromtimestamp(float(timeStamp))
+
 
 def sendEmail(content):
     # 第三方 SMTP 服务

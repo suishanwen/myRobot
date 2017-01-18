@@ -95,6 +95,19 @@ class BTCChina():
         post_data['params'] = [limit, market]
         return self._private_request(post_data)
 
+    def trade(self, price, amount, type, market="btccny", post_data={}):
+        amountStr = "{0:.4f}".format(round(amount, 4))
+        if type == "buy":
+            post_data['method'] = 'buyOrder2'
+        else:
+            post_data['method'] = 'sellOrder2'
+        if price == None:
+            priceStr = None
+        else:
+            priceStr = "{0:.4f}".format(round(price, 4))
+        post_data['params'] = [priceStr, amountStr, market]
+        return self._private_request(post_data)
+
     def buy(self, price, amount, market="btccny", post_data={}):
         amountStr = "{0:.4f}".format(round(amount, 4))
         post_data['method'] = 'buyOrder2'
