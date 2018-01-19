@@ -153,7 +153,7 @@ def getCoinHtml(coin):
 
 
 def saveNote(content):
-    url = 'http://allinbitcoin:8051/sw/api/note/edit'
+    url = 'http://allinbitcoin.info:8051/sw/api/note/edit'
     data = {
         "content": content,
         "editTime": 1515049856000,
