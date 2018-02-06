@@ -1,31 +1,32 @@
 import urllib.request
 import ssl, re, time, requests
 
-coinList = [{"name": "Bitcoin", "version": "1.1.10"},
-            {"name": "Bitcoin Cash", "version": "1.1.8"},
-            {"name": "Dash", "version": "1.1.5"},
-            {"name": "Dogecoin", "version": "1.1.5"},
-            {"name": "Ethereum", "version": "1.0.22"},
-            {"name": "Komodo", "version": "1.1.5"},
-            {"name": "Litecoin", "version": "1.1.9"},
-            {"name": "Stratis", "version": "1.1.5"},
-            {"name": "Zcash", "version": "1.1.5"},
-            {"name": "Ripple", "version": "1.0.3"},
-            {"name": "PoSW Coin", "version": "1.1.7"},
-            {"name": "Ark", "version": "0.1.1"},
-            {"name": "Ubiq", "version": "1.0.22"},
-            {"name": "Expanse", "version": "1.0.20"},
-            {"name": "PIVX", "version": "1.1.12"},
-            {"name": "Stealthcoin", "version": "1.1.10"},
-            {"name": "Vertcoin", "version": "1.1.10"},
-            {"name": "Viacoin", "version": "1.1.10"},
-            {"name": "Neo", "version": "1.1.1"},
-            {"name": "Bitcoin-Gold", "version": "1.1.16"},
-            {"name": "Stellar", "version": "1.1.1"},
-            {"name": "DigiByte", "version": "1.1.17"},
-            {"name": "Hshare", "version": "1.1.17"},
-            {"name": "Qtum", "version": "1.1.17"}
-            ]
+coinList = [
+    {"name": "Bitcoin", "version": "1.1.10"},
+    {"name": "Bitcoin Cash", "version": "1.1.8"},
+    {"name": "Dash", "version": "1.1.5"},
+    {"name": "Dogecoin", "version": "1.1.5"},
+    {"name": "Ethereum", "version": "1.0.22"},
+    {"name": "Komodo", "version": "1.1.5"},
+    {"name": "Litecoin", "version": "1.1.9"},
+    {"name": "Stratis", "version": "1.1.5"},
+    {"name": "Zcash", "version": "1.1.5"},
+    {"name": "Ripple", "version": "1.0.3"},
+    {"name": "PoSW Coin", "version": "1.1.7"},
+    {"name": "Ark", "version": "0.1.1"},
+    {"name": "Ubiq", "version": "1.0.22"},
+    {"name": "Expanse", "version": "1.0.20"},
+    {"name": "PIVX", "version": "1.1.12"},
+    {"name": "Stealthcoin", "version": "1.1.10"},
+    {"name": "Vertcoin", "version": "1.1.10"},
+    {"name": "Viacoin", "version": "1.1.10"},
+    {"name": "Neo", "version": "1.1.1"},
+    {"name": "Bitcoin-Gold", "version": "1.1.16"},
+    {"name": "Stellar", "version": "1.1.1"},
+    {"name": "DigiByte", "version": "1.1.17"},
+    {"name": "Hshare", "version": "1.1.17"},
+    {"name": "Qtum", "version": "1.1.17"}
+]
 
 _info = """<b><a href="$URL$" target="_blank">$NAME$($VERSION$)</a>&nbsp; &nbsp;</b>"""
 _rank = """    <small style="color: rgb(51, 51, 51); font-family:Helvetica Neue, Helvetica, Arial, sans-serif; box-sizing: border-box; font-size: 13.600000381469727px;">
@@ -190,10 +191,11 @@ def getCoinInfo():
         supplyInfo = re.findall(r'<div class="coin-summary-item-detail details-text-medium">\s*\t*\n*(.*)\s*\t*\n*',
                                 html)
         if len(supplyInfo) == 4 or len(supplyInfo) == 5:
-            supply = supplyInfo[len(supplyInfo) - 2]
-            maxSupply = supplyInfo[len(supplyInfo) - 1]
+            supply = '{:,}'.format(int(float(re.findall(r'="(.+?)">', supplyInfo[len(supplyInfo) - 2])[0])))
+            maxSupply = '{:,}'.format(
+                int(float(re.findall(r'="(.+?)">', supplyInfo[len(supplyInfo) - 1])[0])))
         elif len(supplyInfo) == 3:
-            supply = supplyInfo[2]
+            supply = '{:,}'.format(int(float(re.findall(r'="(.+?)">', supplyInfo[2])[0])))
         coin["url"] = url
         coin["rank"] = rank
         coin["mineable"] = mineable
@@ -206,6 +208,7 @@ def getCoinInfo():
         newHtml += coin["html"]
         print(coin)
     saveNote(newHtml)
+
 
 while True:
     getCoinInfo()
