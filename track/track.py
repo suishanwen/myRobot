@@ -207,5 +207,6 @@ def getCoinInfo():
         print(coin)
     saveNote(newHtml)
 
-
-getCoinInfo()
+while True:
+    getCoinInfo()
+    time.sleep(43200)
