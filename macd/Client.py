@@ -267,4 +267,4 @@ while True:
         strategy()
     except Exception as err:
         print(err)
-    time.sleep(0.25)
+    time.sleep(0.1)
