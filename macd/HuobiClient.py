@@ -3,7 +3,7 @@
 # encoding: utf-8
 import sys, importlib
 
-sys.path.append("/home/python")
+sys.path.append("/home/myRobot")
 importlib.reload(sys)
 
 import time, configparser, threading
