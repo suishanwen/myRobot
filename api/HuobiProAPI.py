@@ -29,14 +29,14 @@ def get_kline(symbol, period, size=150):
 
 
 # 获取marketdepth
-def get_depth(symbol, type):
+def get_depth(symbol, _type):
     """
     :param symbol
-    :param type: 可选值：{ percent10, step0, step1, step2, step3, step4, step5 }
+    :param _type: 可选值：{ percent10, step0, step1, step2, step3, step4, step5 }
     :return:
     """
     params = {'symbol': symbol,
-              'type': type}
+              'type': _type}
 
     url = MARKET_URL + '/market/depth'
     return http_get_request(url, params)
@@ -190,7 +190,8 @@ def orders_list(symbol, states, types=None, start_date=None, end_date=None, _fro
     """
 
     :param symbol:
-    :param states: 可选值 {pre-submitted 准备提交, submitted 已提交, partial-filled 部分成交, partial-canceled 部分成交撤销, filled 完全成交, canceled 已撤销}
+    :param states: 可选值 {pre-submitted 准备提交, submitted 已提交, partial-filled 部分成交,
+     partial-canceled 部分成交撤销, filled 完全成交, canceled 已撤销}
     :param types: 可选值 {buy-market：市价买, sell-market：市价卖, buy-limit：限价买, sell-limit：限价卖}
     :param start_date:
     :param end_date:

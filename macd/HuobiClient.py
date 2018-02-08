@@ -64,8 +64,10 @@ def calAvgReward():
     config.set("statis", "reward", str(round(float(config.get("statis", "reward")) + sellReward - buyCost, 5)))
     config.set("statis", "transcount", str(int(config.get("statis", "transcount")) + 1))
     config.set("statis", "fee", str(round(float(config.get("statis", "fee")) + fee, 5)))
-    config.set("statis", "readReward",
-               str(round(float(config.get("statis", "reward")) + sellReward - buyCost - fee, 5)))
+    config.set("statis", "realReward",
+               str(round(
+                   float(config.get("statis", "reward")) + sellReward - buyCost - float(config.get("statis", "fee")),
+                   5)))
 
     fp = open("config.ini", "w")
     config.write(fp)

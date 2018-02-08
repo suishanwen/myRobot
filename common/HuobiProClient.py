@@ -24,7 +24,7 @@ orderDiff = float(config.get("trade", "orderDiff"))
 # global variable
 accountInfo = {BALANCE_USDT: {"total": 0, "available": 0, "freezed": 0},
                BALANCE_HT: {"total": 0, "available": 0, "freezed": 0}}
-priceInfo = {SYMBOL_HT: {"ask": 0, "bid": 0}}
+priceInfo = {SYMBOL_HT: {"buy": 0, "sell": 0}}
 orderInfo = {"symbol": "", "type": "", "price": 0, "amount": 0, "avgPrice": 0, "dealAmount": 0, "transaction": 0}
 orderList = []
 
@@ -177,8 +177,8 @@ def trade(symbol, type, amount, price=0):
 def getCoinPrice(symbol):
     data = get_ticker(symbol)
     if data["status"] == 'ok':
-        priceInfo[symbol]["buy"] = round(float(data["tick"]["ask"][0]), 5)
-        priceInfo[symbol]["bid"] = round(float(data["tick"]["bid"][0]), 5)
+        priceInfo[symbol]["sell"] = round(float(data["tick"]["ask"][0]), 5)
+        priceInfo[symbol]["buy"] = round(float(data["tick"]["bid"][0]), 5)
 
 
 def getTradePrice(symbol, type):
@@ -186,7 +186,7 @@ def getTradePrice(symbol, type):
     if type == TRADE_BUY:
         return priceInfo[symbol]["buy"] + orderDiff
     else:
-        return priceInfo[symbol]["bid"] - orderDiff
+        return priceInfo[symbol]["sell"] - orderDiff
 
 
 def writeLog(text=""):
