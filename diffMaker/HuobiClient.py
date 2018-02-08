@@ -60,7 +60,8 @@ def order_process(my_order_info):
     # dealed or part dealed
     if state != 'partial-canceled' and state != 'canceled':
         my_order_info.set_transaction("minus")
-        # HuobiClient.write_log(my_order_info)
+        if state == 'filled':
+            HuobiClient.write_log(my_order_info)
     else:
         my_order_info.set_price(0)
         order_process(my_order_info)
