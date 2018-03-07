@@ -179,7 +179,7 @@ def getCoinInfo():
     for coin in coinList:
         url = 'https://coinmarketcap.com/currencies/' + coin["name"].lower().replace(" ", "-")
         html = httpGet(url)
-        html = html[html.index('Cryptocurrency Market Capitalizations'):html.index('Coin</span></small>')]
+        html = html[html.index('Cryptocurrency Market Capitalizations'):html.index('</span>\n</small>') + 7]
         rank = re.findall(r"Rank (.+?)</span>", html)[0]
         mineable = len(re.findall(r"Mineable", html))
         price = re.findall(r'<span class="text-large2" data-currency-value>(.+?)</span>', html)[0]
